@@ -1,7 +1,7 @@
+import { prisma } from "../lib/prisma";
 import { PrismaClient, NotificationType, CampaignStatus } from "@prisma/client";
 import webpush from "web-push";
 
-const prisma = new PrismaClient();
 
 if (process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
   webpush.setVapidDetails(

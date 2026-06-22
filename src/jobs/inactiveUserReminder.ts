@@ -1,7 +1,5 @@
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "../lib/prisma";
 
-// Since this might run in a separate process, we instantiate a new PrismaClient
-const prisma = new PrismaClient();
 
 export async function runInactiveUserReminder() {
   try {

@@ -1,7 +1,7 @@
-import { PrismaClient, NotificationType } from "@prisma/client";
+import { prisma } from "../lib/prisma";
+import { NotificationType } from "@prisma/client";
 
 
-const prisma = new PrismaClient();
 
 export async function runNearbyNotificationJob() {
   try {
