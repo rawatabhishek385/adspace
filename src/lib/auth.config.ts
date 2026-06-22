@@ -5,13 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { User } from "@prisma/client";
 import crypto from "crypto";
 
-// Generate a unique ID on every server boot. This makes the JWT secret
-// different each time the server starts, which invalidates all existing
-// sessions and forces users to log in again after a restart.
-if (!(globalThis as any).__nextauth_boot_id) {
-  (globalThis as any).__nextauth_boot_id = crypto.randomUUID();
-}
-declare var globalThis: { __nextauth_boot_id: string } & typeof global;
+
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -137,8 +131,5 @@ export const authOptions: NextAuthOptions = {
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
 
-  // Generate a new secret on every server start so all sessions are
-  // invalidated when the dev server restarts. Old JWT cookies signed
-  // with the previous secret will fail validation → user gets logged out.
-  secret: process.env.NEXTAUTH_SECRET + "-" + globalThis.__nextauth_boot_id,
+  secret: process.env.NEXTAUTH_SECRET,
 };
