@@ -16,6 +16,7 @@ type Conversation = {
   unreadCount: number;
   isOnline?: boolean;
   lastSeen?: string;
+  isPinned?: boolean;
 };
 
 export default function ConversationsSidebar() {
