@@ -1,35 +1,41 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth.config";
 import { prisma } from "@/lib/prisma";
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
-      return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
+    const { searchParams } = new URL(req.url);
+    const userId = searchParams.get("userId");
+
+    if (!userId) {
+      return NextResponse.json({ error: "User ID is required" }, { status: 400 });
     }
 
-    const fourteenDaysAgo = new Date();
-    fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
-
-    // Check if user had any activity in the last 14 days
-    const recentActivity = await prisma.userActivity.findFirst({
-      where: {
-        userId: session.user.id,
-        createdAt: { gte: fourteenDaysAgo },
-      },
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        isOnline: true,
+        lastSeen: true,
+        influencerProfile: {
+          select: {
+            availabilityStatus: true,
+            responseTime: true
+          }
+        }
+      }
     });
 
-    return NextResponse.json({ 
-      success: true, 
-      isInactive: !recentActivity // True if no activity in last 14 days
+    if (!user) {
+      return new NextResponse("User not found", { status: 404 });
+    }
+
+    return NextResponse.json({
+      isOnline: user.isOnline,
+      lastSeen: user.lastSeen,
+      availabilityStatus: user.influencerProfile?.availabilityStatus || 'OFFLINE',
+      responseTime: user.influencerProfile?.responseTime || null
     });
   } catch (error) {
-    console.error("Failed to check activity status:", error);
-    return NextResponse.json(
-      { success: false, message: "Internal server error" },
-      { status: 500 }
-    );
+    console.error("[ACTIVITY_STATUS_GET]", error);
+    return new NextResponse("Internal Error", { status: 500 });
   }
 }

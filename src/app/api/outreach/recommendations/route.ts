@@ -83,7 +83,7 @@ export async function GET(req: Request) {
       followers: c.followers,
       rating: c.rating,
       totalCampaigns: c.totalCampaigns,
-      isAvailable: c.isAvailable,
+      availabilityStatus: c.availabilityStatus,
       responseTime: c.responseTime,
     }));
 

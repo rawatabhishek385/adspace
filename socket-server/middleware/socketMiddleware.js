@@ -9,7 +9,7 @@ module.exports = (socket, next) => {
     return next(new Error('Authentication error: userId is required'));
   }
 
-  // Attach userId to the socket object for downstream usage
-  socket.userId = userId;
+  // Attach user to the socket object for downstream usage
+  socket.user = { id: userId };
   next();
 };

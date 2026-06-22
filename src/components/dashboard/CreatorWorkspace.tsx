@@ -81,11 +81,30 @@ export default function CreatorWorkspace({ profile, campaigns }: { profile: any,
               <p className="text-sm font-medium text-slate-500 mb-1">Pending Requests</p>
               <p className="text-2xl font-bold text-amber-500">{pendingRequests}</p>
             </div>
-            <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+            <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm flex flex-col justify-between">
               <p className="text-sm font-medium text-slate-500 mb-1">Status</p>
-              <p className={`text-xl font-bold ${profile.isAvailable ? "text-emerald-500" : "text-red-500"}`}>
-                {profile.isAvailable ? "Available" : "Busy"}
-              </p>
+              <select
+                className={`text-lg font-bold bg-transparent focus:outline-none ${profile.availabilityStatus === 'AVAILABLE' ? "text-emerald-500" : profile.availabilityStatus === 'BUSY' ? "text-amber-500" : "text-slate-500"}`}
+                value={profile.availabilityStatus}
+                onChange={(e) => {
+                  const socket = require('@/lib/socket').getSocket();
+                  if (socket) {
+                    socket.emit('availabilityChanged', { 
+                      userId: profile.userId, 
+                      status: e.target.value,
+                      responseTime: profile.responseTime
+                    });
+                    toast.success('Availability updated!');
+                    router.refresh();
+                  } else {
+                    toast.error('Socket not connected');
+                  }
+                }}
+              >
+                <option value="AVAILABLE" className="text-emerald-500">Available</option>
+                <option value="BUSY" className="text-amber-500">Busy</option>
+                <option value="OFFLINE" className="text-slate-500">Offline</option>
+              </select>
             </div>
           </div>
           

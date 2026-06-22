@@ -53,6 +53,7 @@ export default async function PublicProfilePage({ params }: ProfilePageProps) {
       website: true,
       createdAt: true,
       lastSeen: true,
+      isOnline: true,
       averageRating: true,
       totalReviews: true,
       influencerProfile: {
@@ -126,7 +127,11 @@ export default async function PublicProfilePage({ params }: ProfilePageProps) {
             <h1 className="text-2xl font-bold text-slate-900">{user.name}</h1>
             <p className="text-slate-500 text-sm mb-1">Advertising Space Owner</p>
             
-            <ProfilePresence userId={user.id} initialLastSeen={user.lastSeen ? user.lastSeen.toISOString() : null} />
+            <ProfilePresence 
+              userId={user.id} 
+              initialIsOnline={user.isOnline}
+              initialLastSeen={user.lastSeen ? user.lastSeen.toISOString() : null} 
+            />
             
             {(user.city || user.state || user.country) && (
               <div className="flex items-center text-blue-500 text-sm mb-2">
@@ -247,8 +252,8 @@ export default async function PublicProfilePage({ params }: ProfilePageProps) {
                     )}
                     <div className="bg-white/80 p-3 rounded-xl border border-blue-100">
                       <p className="text-sm text-slate-500 mb-1">Status</p>
-                      <p className={`text-sm font-bold truncate ${user.influencerProfile.isAvailable ? "text-emerald-600" : "text-red-500"}`}>
-                        {user.influencerProfile.isAvailable ? "🟢 Available" : "🔴 Busy"}
+                      <p className={`text-sm font-bold truncate ${user.influencerProfile.availabilityStatus === 'AVAILABLE' ? "text-emerald-600" : user.influencerProfile.availabilityStatus === 'BUSY' ? "text-amber-500" : "text-red-500"}`}>
+                        {user.influencerProfile.availabilityStatus === 'AVAILABLE' ? "🟢 Available" : user.influencerProfile.availabilityStatus === 'BUSY' ? "🟡 Busy" : "🔴 Offline"}
                       </p>
                     </div>
                     {user.influencerProfile.pricePerPost && (

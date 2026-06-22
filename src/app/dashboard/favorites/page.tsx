@@ -53,7 +53,7 @@ export default async function FavoritesDashboardPage() {
                     {influencer.user.name[0]}
                   </span>
                 )}
-                {influencer.isAvailable && (
+                {influencer.availabilityStatus === 'AVAILABLE' && (
                   <div className="absolute bottom-0 right-0 w-4 h-4 bg-emerald-500 rounded-full border-2 border-white"></div>
                 )}
               </div>

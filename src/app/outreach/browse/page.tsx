@@ -88,7 +88,7 @@ export default async function BrowseInfluencersPage({
     where: whereClause,
     include: {
       user: {
-        select: { name: true, email: true, avatar: true },
+        select: { name: true, email: true, avatar: true, isOnline: true, lastSeen: true },
       },
     },
     orderBy: { followers: "desc" },
