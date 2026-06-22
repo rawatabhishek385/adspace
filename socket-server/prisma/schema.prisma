@@ -1,0 +1,827 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum AvailabilityStatus {
+  AVAILABLE
+  BUSY
+  OFFLINE
+}
+
+enum ConversationStatus {
+  ACTIVE
+  CLOSED
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+}
+
+enum ActivityType {
+  SEARCH
+  VIEW
+  FAVORITE
+  CHAT
+}
+
+enum NotificationType {
+  NEARBY_LISTING
+  REVIEW_REMINDER
+  CHAT
+  SYSTEM
+  MESSAGE
+  REVIEW
+  FAVORITE
+  PROMOTION
+  ADMIN
+  ALERT
+}
+
+enum NotificationChannel {
+  IN_APP
+  PUSH
+  EMAIL
+  SOCKET
+}
+
+enum CampaignStatus {
+  DRAFT
+  SCHEDULED
+  SENT
+  FAILED
+}
+
+enum CampaignType {
+  INSTANT
+  SCHEDULED
+}
+
+enum AudienceType {
+  ALL_USERS
+  BUYERS
+  OWNERS
+  PREMIUM_USERS
+  LOCATION_SPECIFIC
+  ACTIVE_USERS
+  INACTIVE_USERS
+}
+
+model User {
+  id                       String    @id @default(cuid())
+  name                     String
+  email                    String    @unique
+  password                 String
+  phone                    String?
+  role                     UserRole  @default(USER)
+  emailVerified            Boolean   @default(false)
+  emailVerificationToken   String?   @unique
+  emailVerificationExpires DateTime?
+  resetPasswordToken       String?   @unique
+  resetPasswordExpires     DateTime?
+  sessionVersion           Int       @default(1)
+  isActive                 Boolean   @default(true)
+  isOnline                 Boolean   @default(false)
+  lastSeen                 DateTime?
+  lastActiveAt             DateTime?
+
+  // Profile fields
+  avatar  String?
+  bio     String?
+  city    String?
+  state   String?
+  country String?
+  website String?
+
+  // Future Ratings & Reviews Preparation
+  averageRating        Float     @default(0)
+  totalReviews         Int       @default(0)
+  reviewReminderSentAt DateTime?
+
+  // Preferences & Auto-Reply
+  preferredCity      String?
+  notificationRadius Int     @default(25)
+  autoReplyEnabled   Boolean @default(false)
+  autoReplyMessage   String?
+
+  listings     Listing[]
+  reports      Report[]      @relation("UserReports")
+  activityLogs ActivityLog[] @relation("AdminActions")
+
+  buyerConversations Conversation[]    @relation("BuyerConversations")
+  ownerConversations Conversation[]    @relation("OwnerConversations")
+  messages           Message[]
+  messageReactions   MessageReaction[]
+
+  reviewsGiven    Review[]        @relation("ReviewsGiven")
+  reviewsReceived Review[]        @relation("ReviewsReceived")
+  listingReviews  ListingReview[]
+  favorites       Favorite[]
+
+  userReportsSubmitted UserReport[] @relation("UserReportSubmitter")
+  userReportsReceived  UserReport[] @relation("UserReportTarget")
+
+  userActivities             UserActivity[]
+  influencerReviewsGiven     InfluencerReview[]      @relation("InfluencerReviewsGiven")
+  influencerReportsSubmitted InfluencerReport[]      @relation("InfluencerReportsSubmitted")
+  campaignRequestsSent       CampaignRequest[]       @relation("CampaignRequestsSent")
+  favoriteInfluencers        FavoriteInfluencer[]
+  deliverablesUploaded       CampaignDeliverable[]
+  notifications              Notification[]
+  recommendations            UserRecommendation[]
+  recentlyViewed             RecentlyViewed[]
+  pushSubscriptions          PushSubscription[]
+  notificationPreferences    NotificationPreference?
+  savedSearches              SavedSearch[]
+  influencerProfile          InfluencerProfile?
+
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  pinnedConversations PinnedConversation[]
+  messageHides        MessageHide[]
+}
+
+model Category {
+  id       String  @id @default(cuid())
+  name     String  @unique
+  imageUrl String?
+
+  listings Listing[]
+
+  createdAt DateTime @default(now())
+}
+
+model Listing {
+  id   String @id @default(cuid())
+  slug String @unique @default(cuid())
+
+  title       String
+  description String
+
+  country String
+  city    String
+  address String
+
+  latitude  Float
+  longitude Float
+
+  viewCount Int @default(0)
+
+  width  Float?
+  height Float?
+
+  indoorOutdoor   String
+  digitalPhysical String
+
+  price       Float
+  pricePeriod String
+
+  averageRating Float @default(0)
+  totalRatings  Int   @default(0)
+  trendingScore Float @default(0)
+
+  isActive   Boolean @default(true)
+  isFeatured Boolean @default(false)
+
+  ownerId    String
+  categoryId String
+
+  owner    User     @relation(fields: [ownerId], references: [id])
+  category Category @relation(fields: [categoryId], references: [id])
+
+  media           Media[]
+  reports         Report[]
+  conversations   Conversation[]
+  listingReviews  ListingReview[]
+  favorites       Favorite[]
+  recommendations UserRecommendation[]
+  recentlyViewed  RecentlyViewed[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([slug])
+  @@index([city])
+  @@index([categoryId])
+  @@index([ownerId])
+  @@index([isActive])
+  @@index([isFeatured])
+  @@index([createdAt])
+}
+
+model Media {
+  id String @id @default(cuid())
+
+  url      String
+  publicId String?
+  type     MediaType
+
+  listingId String
+  listing   Listing @relation(fields: [listingId], references: [id], map: "Media_listingId_fkey_v2")
+
+  createdAt DateTime @default(now())
+}
+
+// ─── Reporting System ────────────────────────────────────────────────────────
+
+enum ReportStatus {
+  PENDING
+  REVIEWED
+  RESOLVED
+  APPROVED
+  DECLINED
+}
+
+model Report {
+  id          String       @id @default(cuid())
+  reason      String
+  description String?
+  status      ReportStatus @default(PENDING)
+
+  listingId String
+  listing   Listing @relation(fields: [listingId], references: [id])
+
+  reporterId String
+  reporter   User   @relation("UserReports", fields: [reporterId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ─── Activity Logging ─────────────────────────────────────────────────────────
+
+model ActivityLog {
+  id       String  @id @default(cuid())
+  action   String // e.g. "USER_DISABLED", "LISTING_FEATURED"
+  details  String? // optional context
+  actorId  String
+  actor    User    @relation("AdminActions", fields: [actorId], references: [id])
+  targetId String? // userId or listingId affected
+
+  createdAt DateTime @default(now())
+}
+
+// ─── Messaging System ─────────────────────────────────────────────────────────
+
+enum ConversationType {
+  LISTING
+  CAMPAIGN
+  INFLUENCER
+}
+
+model Conversation {
+  id              String             @id @default(cuid())
+  listingId       String?
+  campaignId      String?
+  buyerId         String
+  ownerId         String
+  type            ConversationType   @default(LISTING)
+  status          ConversationStatus @default(ACTIVE)
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  lastMessageAt   DateTime           @default(now())
+  subject         String?
+  pinnedMessageId String?            @unique
+
+  listing  Listing?         @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  campaign CampaignRequest? @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  buyer    User             @relation("BuyerConversations", fields: [buyerId], references: [id], onDelete: Cascade)
+  owner    User             @relation("OwnerConversations", fields: [ownerId], references: [id], onDelete: Cascade)
+  messages Message[]
+  reviews  Review[]
+
+  pinnedMessage       Message?             @relation("PinnedMessage", fields: [pinnedMessageId], references: [id], onDelete: SetNull)
+  pinnedConversations PinnedConversation[]
+
+  @@unique([listingId, campaignId, buyerId, ownerId])
+  @@index([buyerId])
+  @@index([ownerId])
+  @@index([listingId])
+  @@index([campaignId])
+}
+
+enum MessageType {
+  TEXT
+  IMAGE
+  FILE
+}
+
+model Message {
+  id             String      @id @default(cuid())
+  conversationId String
+  senderId       String
+  content        String      @db.Text
+  messageType    MessageType @default(TEXT)
+  imageUrl       String?
+  fileUrl        String?
+  fileName       String?
+  fileSize       Int?
+  replyToId      String?
+  isEdited       Boolean     @default(false)
+  editedAt       DateTime?
+  isDeleted      Boolean     @default(false)
+  deletedAt      DateTime?
+  isStarred      Boolean     @default(false)
+  createdAt      DateTime    @default(now())
+  isRead         Boolean     @default(false)
+  readAt         DateTime?
+  isDelivered    Boolean     @default(false)
+  deliveredAt    DateTime?
+
+  conversation Conversation      @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender       User              @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  replyTo      Message?          @relation("ReplyTo", fields: [replyToId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  replies      Message[]         @relation("ReplyTo")
+  reactions    MessageReaction[]
+  pinnedIn     Conversation?     @relation("PinnedMessage")
+  hiddenBy     MessageHide[]
+
+  @@index([conversationId])
+  @@index([senderId])
+  @@index([createdAt])
+}
+
+model MessageReaction {
+  id    String @id @default(cuid())
+  emoji String
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  messageId String
+  message   Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, messageId, emoji])
+  @@index([messageId])
+  @@index([userId])
+}
+
+model PinnedConversation {
+  id             String   @id @default(cuid())
+  userId         String
+  conversationId String
+  createdAt      DateTime @default(now())
+
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, conversationId])
+  @@index([userId])
+  @@index([conversationId])
+}
+
+model MessageHide {
+  id        String   @id @default(cuid())
+  userId    String
+  messageId String
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, messageId])
+  @@index([userId])
+  @@index([messageId])
+}
+
+model Review {
+  id String @id @default(cuid())
+
+  rating  Int
+  comment String?
+
+  reviewerId String
+  revieweeId String
+
+  conversationId String
+
+  isDeleted Boolean @default(false)
+
+  reviewer User @relation("ReviewsGiven", fields: [reviewerId], references: [id])
+  reviewee User @relation("ReviewsReceived", fields: [revieweeId], references: [id])
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([reviewerId, revieweeId, conversationId])
+  @@index([revieweeId])
+  @@index([reviewerId])
+}
+
+model ListingReview {
+  id String @id @default(cuid())
+
+  rating  Int
+  comment String?
+
+  listingId      String
+  reviewerId     String
+  conversationId String?
+
+  isDeleted Boolean @default(false)
+
+  listing  Listing @relation(fields: [listingId], references: [id])
+  reviewer User    @relation(fields: [reviewerId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([listingId, reviewerId])
+  @@index([listingId])
+  @@index([reviewerId])
+}
+
+model UserReport {
+  id String @id @default(cuid())
+
+  reason      String
+  description String?
+  status      ReportStatus @default(PENDING)
+
+  reporterId     String
+  reportedUserId String
+  conversationId String?
+
+  reporter     User @relation("UserReportSubmitter", fields: [reporterId], references: [id])
+  reportedUser User @relation("UserReportTarget", fields: [reportedUserId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([reporterId, reportedUserId, conversationId])
+  @@index([reporterId])
+  @@index([reportedUserId])
+}
+
+model Favorite {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  listingId String
+  listing   Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, listingId])
+  @@index([userId])
+  @@index([listingId])
+}
+
+// ─── User Intelligence & Engagement ──────────────────────────────────────────
+
+model UserActivity {
+  id         String       @id @default(cuid())
+  userId     String
+  listingId  String?
+  actionType ActivityType
+  city       String?
+  categoryId String?
+  searchTerm String?
+
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([categoryId])
+  @@index([createdAt])
+}
+
+model Notification {
+  id        String              @id @default(cuid())
+  userId    String
+  title     String
+  message   String
+  imageUrl  String?
+  actionUrl String?
+  type      NotificationType
+  channel   NotificationChannel @default(IN_APP)
+  isRead    Boolean             @default(false)
+  createdAt DateTime            @default(now())
+
+  // Analytics fields directly on Notification as requested
+  deliveredAt DateTime?
+  openedAt    DateTime?
+  clickedAt   DateTime?
+  dismissedAt DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([isRead])
+  @@index([createdAt])
+}
+
+model UserRecommendation {
+  id        String @id @default(cuid())
+  userId    String
+  listingId String
+  score     Float
+
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([listingId])
+  @@index([createdAt])
+}
+
+model RecentlyViewed {
+  id        String   @id @default(cuid())
+  userId    String
+  listingId String
+  viewedAt  DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([listingId])
+}
+
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  endpoint  String   @db.Text
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model SavedSearch {
+  id         String   @id @default(cuid())
+  userId     String
+  query      String
+  city       String?
+  categoryId String?
+  createdAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model NotificationCampaign {
+  id             String         @id @default(cuid())
+  title          String
+  message        String
+  imageUrl       String?
+  actionUrl      String?
+  targetAudience AudienceType
+  targetState    String?
+  targetCity     String?
+  sendType       CampaignType
+  status         CampaignStatus @default(DRAFT)
+  scheduledAt    DateTime?
+  sentAt         DateTime?
+  openCount      Int            @default(0)
+  clickCount     Int            @default(0)
+  createdAt      DateTime       @default(now())
+}
+
+model AnnouncementBanner {
+  id          String   @id @default(cuid())
+  title       String
+  message     String
+  imageUrl    String?
+  actionUrl   String?
+  targetState String?
+  targetCity  String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+}
+
+model NotificationPreference {
+  id            String  @id @default(cuid())
+  userId        String  @unique
+  messages      Boolean @default(true)
+  reviews       Boolean @default(true)
+  promotions    Boolean @default(true)
+  nearbyAlerts  Boolean @default(true)
+  email         Boolean @default(true)
+  browserPush   Boolean @default(true)
+  weeklyReports Boolean @default(true)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ─── Influencer & Outreach ────────────────────────────────────────────────────
+
+enum InfluencerType {
+  INDIVIDUAL
+  DIGITAL_MARKETER
+}
+
+enum InfluencerStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model InfluencerProfile {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  type   InfluencerType
+  status InfluencerStatus @default(PENDING)
+
+  category        String?
+  followers       Int?
+  city            String?
+  profileImage    String?
+  portfolioImages Json? // Array of URLs
+  rating          Float   @default(0)
+  totalReviews    Int     @default(0)
+  totalCampaigns  Int     @default(0)
+  isPublic        Boolean @default(true)
+
+  approvedBy String?
+  approvedAt DateTime?
+
+  companyName  String?
+  description  String? @db.Text
+  pricePerPost Float?
+
+  instagramUrl String?
+  youtubeUrl   String?
+  twitterUrl   String?
+  linkedinUrl  String?
+  facebookUrl  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  reviews          InfluencerReview[]   @relation("InfluencerReviews")
+  reports          InfluencerReport[]   @relation("InfluencerReports")
+  campaignRequests CampaignRequest[]    @relation("InfluencerCampaignRequests")
+  portfolio        PortfolioItem[]
+  favoritedBy      FavoriteInfluencer[]
+
+  availabilityStatus AvailabilityStatus @default(AVAILABLE)
+  responseTime       String?
+  profileViews       Int                @default(0)
+  acceptanceRate     Float              @default(100)
+  responseRate       Float              @default(100)
+
+  @@index([status])
+  @@index([type])
+  @@index([isPublic])
+  @@index([city])
+}
+
+model InfluencerReview {
+  id           String  @id @default(cuid())
+  rating       Int
+  comment      String? @db.Text
+  reviewerId   String
+  influencerId String
+
+  reviewer   User              @relation("InfluencerReviewsGiven", fields: [reviewerId], references: [id])
+  influencer InfluencerProfile @relation("InfluencerReviews", fields: [influencerId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([reviewerId, influencerId])
+  @@index([influencerId])
+  @@index([reviewerId])
+}
+
+model InfluencerReport {
+  id          String       @id @default(cuid())
+  reason      String
+  description String?      @db.Text
+  status      ReportStatus @default(PENDING)
+
+  reporterId   String
+  influencerId String
+
+  reporter   User              @relation("InfluencerReportsSubmitted", fields: [reporterId], references: [id])
+  influencer InfluencerProfile @relation("InfluencerReports", fields: [influencerId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([reporterId])
+  @@index([influencerId])
+}
+
+// ─── Campaign Requests ────────────────────────────────────────────────────────
+
+enum CampaignRequestStatus {
+  PENDING
+  ACCEPTED
+  IN_PROGRESS
+  SUBMITTED
+  REJECTED
+  CANCELLED
+  COMPLETED
+}
+
+enum OutreachCampaignType {
+  INFLUENCER
+  DIGITAL_MARKETING
+}
+
+model CampaignRequest {
+  id String @id @default(cuid())
+
+  requesterId         String
+  influencerProfileId String
+
+  title       String
+  description String  @db.Text
+  budget      Float?
+  timeline    String?
+
+  campaignType OutreachCampaignType
+
+  status CampaignRequestStatus @default(PENDING)
+
+  price       Float?
+  completedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  requester         User                  @relation("CampaignRequestsSent", fields: [requesterId], references: [id], onDelete: Cascade)
+  influencerProfile InfluencerProfile     @relation("InfluencerCampaignRequests", fields: [influencerProfileId], references: [id], onDelete: Cascade)
+  conversations     Conversation[]
+  deliverables      CampaignDeliverable[]
+
+  @@index([requesterId])
+  @@index([influencerProfileId])
+}
+
+model PortfolioItem {
+  id           String  @id @default(cuid())
+  title        String
+  description  String? @db.Text
+  imageUrl     String
+  platform     String?
+  brandName    String?
+  campaignType String?
+  campaignYear Int?
+
+  influencerId String
+  influencer   InfluencerProfile @relation(fields: [influencerId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([influencerId])
+}
+
+model FavoriteInfluencer {
+  id           String @id @default(cuid())
+  userId       String
+  influencerId String
+
+  user       User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  influencer InfluencerProfile @relation(fields: [influencerId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, influencerId])
+  @@index([userId])
+  @@index([influencerId])
+}
+
+model CampaignDeliverable {
+  id       String  @id @default(cuid())
+  title    String
+  fileUrl  String
+  fileType String?
+
+  uploadedById      String
+  campaignRequestId String
+
+  uploadedBy      User            @relation(fields: [uploadedById], references: [id], onDelete: Cascade)
+  campaignRequest CampaignRequest @relation(fields: [campaignRequestId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([campaignRequestId])
+  @@index([uploadedById])
+}
