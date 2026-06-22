@@ -46,7 +46,7 @@ export default function RecommendedCreators({ category, city }: { category?: str
                 ) : (
                   <span className="w-full h-full flex items-center justify-center font-bold text-slate-400">{r.name[0]}</span>
                 )}
-                {r.isAvailable && (
+                {r.availabilityStatus === 'AVAILABLE' && (
                   <div className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 rounded-full border-2 border-white"></div>
                 )}
               </div>

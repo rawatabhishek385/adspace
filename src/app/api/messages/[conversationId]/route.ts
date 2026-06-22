@@ -80,6 +80,11 @@ export async function GET(request: Request, { params }: RouteParams) {
       where: {
         conversationId: resolvedParams.conversationId,
         isDeleted: false,
+        hiddenBy: {
+          none: {
+            userId: session.user.id
+          }
+        }
       },
       orderBy: { createdAt: "asc" },
       select: {
@@ -90,6 +95,8 @@ export async function GET(request: Request, { params }: RouteParams) {
         fileUrl: true,
         fileName: true,
         fileSize: true,
+        isEdited: true,
+        editedAt: true,
         isDeleted: true,
         isStarred: true,
         replyToId: true,

@@ -12,6 +12,13 @@ const broadcastEvents = require('./notifications/broadcastEvents');
 const readNotificationEvents = require('./notifications/readEvents');
 const countEvents = require('./notifications/countEvents');
 
+// Advanced Chat Events
+const reactionEvents = require('./chat/reactionEvents');
+const replyEvents = require('./chat/replyEvents');
+const editEvents = require('./chat/editEvents');
+const deleteEvents = require('./chat/deleteEvents');
+const pinEvents = require('./chat/pinEvents');
+
 const rateLimiter = require('../middleware/rateLimiter');
 
 module.exports = (io) => {
@@ -32,6 +39,11 @@ module.exports = (io) => {
     typingEvents(io, socket);
     readEvents(io, socket);
     deliveryEvents(io, socket);
+    reactionEvents(io, socket);
+    replyEvents(io, socket);
+    editEvents(io, socket);
+    deleteEvents(io, socket);
+    pinEvents(io, socket);
 
     // 4. Notification Events
     notificationEvents(io, socket);
@@ -39,7 +51,13 @@ module.exports = (io) => {
     readNotificationEvents(io, socket);
     countEvents(io, socket);
 
-    // 5. Disconnect Event
+    // 5. Presence Events
+    const presenceEvents = require('./presence/presenceEvents');
+    const availabilityEvents = require('./presence/availabilityEvents');
+    presenceEvents(io, socket);
+    availabilityEvents(io, socket);
+
+    // 6. Disconnect Event
     socket.on('disconnect', () => {
       disconnectHandler(io, socket);
     });

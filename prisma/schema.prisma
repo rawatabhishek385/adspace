@@ -12,6 +12,12 @@ enum UserRole {
   ADMIN
 }
 
+enum AvailabilityStatus {
+  AVAILABLE
+  BUSY
+  OFFLINE
+}
+
 enum ConversationStatus {
   ACTIVE
   CLOSED
@@ -72,12 +78,12 @@ enum AudienceType {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  name      String
-  email     String   @unique
-  password  String
-  phone     String?
-  role      UserRole @default(USER)
+  id                       String    @id @default(cuid())
+  name                     String
+  email                    String    @unique
+  password                 String
+  phone                    String?
+  role                     UserRole  @default(USER)
   emailVerified            Boolean   @default(false)
   emailVerificationToken   String?   @unique
   emailVerificationExpires DateTime?
@@ -85,19 +91,21 @@ model User {
   resetPasswordExpires     DateTime?
   sessionVersion           Int       @default(1)
   isActive                 Boolean   @default(true)
+  isOnline                 Boolean   @default(false)
   lastSeen                 DateTime?
+  lastActiveAt             DateTime?
 
   // Profile fields
-  avatar      String?
-  bio         String?
-  city        String?
-  state       String?
-  country     String?
-  website     String?
+  avatar  String?
+  bio     String?
+  city    String?
+  state   String?
+  country String?
+  website String?
 
   // Future Ratings & Reviews Preparation
-  averageRating Float @default(0)
-  totalReviews  Int   @default(0)
+  averageRating        Float     @default(0)
+  totalReviews         Int       @default(0)
   reviewReminderSentAt DateTime?
 
   // Preferences & Auto-Reply
@@ -106,88 +114,90 @@ model User {
   autoReplyEnabled   Boolean @default(false)
   autoReplyMessage   String?
 
-  listings      Listing[]
-  reports       Report[]      @relation("UserReports")
-  activityLogs  ActivityLog[] @relation("AdminActions")
+  listings     Listing[]
+  reports      Report[]      @relation("UserReports")
+  activityLogs ActivityLog[] @relation("AdminActions")
 
-  buyerConversations  Conversation[] @relation("BuyerConversations")
-  ownerConversations  Conversation[] @relation("OwnerConversations")
-  messages            Message[]
-  messageReactions    MessageReaction[]
+  buyerConversations Conversation[]    @relation("BuyerConversations")
+  ownerConversations Conversation[]    @relation("OwnerConversations")
+  messages           Message[]
+  messageReactions   MessageReaction[]
 
-  reviewsGiven        Review[]       @relation("ReviewsGiven")
-  reviewsReceived     Review[]       @relation("ReviewsReceived")
-  listingReviews      ListingReview[]
-  favorites           Favorite[]
+  reviewsGiven    Review[]        @relation("ReviewsGiven")
+  reviewsReceived Review[]        @relation("ReviewsReceived")
+  listingReviews  ListingReview[]
+  favorites       Favorite[]
 
-  userReportsSubmitted  UserReport[]  @relation("UserReportSubmitter")
-  userReportsReceived   UserReport[]  @relation("UserReportTarget")
+  userReportsSubmitted UserReport[] @relation("UserReportSubmitter")
+  userReportsReceived  UserReport[] @relation("UserReportTarget")
 
-  userActivities        UserActivity[]
-  influencerReviewsGiven InfluencerReview[] @relation("InfluencerReviewsGiven")
-  influencerReportsSubmitted InfluencerReport[] @relation("InfluencerReportsSubmitted")
-  campaignRequestsSent  CampaignRequest[] @relation("CampaignRequestsSent")
-  favoriteInfluencers   FavoriteInfluencer[]
-  deliverablesUploaded  CampaignDeliverable[]
-  notifications         Notification[]
-  recommendations       UserRecommendation[]
-  recentlyViewed        RecentlyViewed[]
-  pushSubscriptions     PushSubscription[]
-  notificationPreferences NotificationPreference?
-  savedSearches         SavedSearch[]
-  influencerProfile     InfluencerProfile?
+  userActivities             UserActivity[]
+  influencerReviewsGiven     InfluencerReview[]      @relation("InfluencerReviewsGiven")
+  influencerReportsSubmitted InfluencerReport[]      @relation("InfluencerReportsSubmitted")
+  campaignRequestsSent       CampaignRequest[]       @relation("CampaignRequestsSent")
+  favoriteInfluencers        FavoriteInfluencer[]
+  deliverablesUploaded       CampaignDeliverable[]
+  notifications              Notification[]
+  recommendations            UserRecommendation[]
+  recentlyViewed             RecentlyViewed[]
+  pushSubscriptions          PushSubscription[]
+  notificationPreferences    NotificationPreference?
+  savedSearches              SavedSearch[]
+  influencerProfile          InfluencerProfile?
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  pinnedConversations PinnedConversation[]
+  messageHides        MessageHide[]
 }
 
 model Category {
-  id        String    @id @default(cuid())
-  name      String    @unique
-  imageUrl  String?
+  id       String  @id @default(cuid())
+  name     String  @unique
+  imageUrl String?
 
-  listings  Listing[]
+  listings Listing[]
 
-  createdAt DateTime  @default(now())
+  createdAt DateTime @default(now())
 }
 
 model Listing {
-  id              String   @id @default(cuid())
-  slug            String   @unique @default(cuid())
+  id   String @id @default(cuid())
+  slug String @unique @default(cuid())
 
-  title           String
-  description     String
+  title       String
+  description String
 
-  country         String
-  city            String
-  address         String
+  country String
+  city    String
+  address String
 
-  latitude        Float
-  longitude       Float
+  latitude  Float
+  longitude Float
 
-  viewCount       Int      @default(0)
+  viewCount Int @default(0)
 
-  width           Float?
-  height          Float?
+  width  Float?
+  height Float?
 
   indoorOutdoor   String
   digitalPhysical String
 
-  price           Float
-  pricePeriod     String
+  price       Float
+  pricePeriod String
 
-  averageRating   Float    @default(0)
-  totalRatings    Int      @default(0)
-  trendingScore   Float    @default(0)
+  averageRating Float @default(0)
+  totalRatings  Int   @default(0)
+  trendingScore Float @default(0)
 
-  isActive        Boolean @default(true)
-  isFeatured      Boolean @default(false)
+  isActive   Boolean @default(true)
+  isFeatured Boolean @default(false)
 
-  ownerId         String
-  categoryId      String
+  ownerId    String
+  categoryId String
 
-  owner           User      @relation(fields: [ownerId], references: [id])
-  category        Category  @relation(fields: [categoryId], references: [id])
+  owner    User     @relation(fields: [ownerId], references: [id])
+  category Category @relation(fields: [categoryId], references: [id])
 
   media           Media[]
   reports         Report[]
@@ -197,8 +207,8 @@ model Listing {
   recommendations UserRecommendation[]
   recentlyViewed  RecentlyViewed[]
 
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([slug])
   @@index([city])
@@ -210,16 +220,16 @@ model Listing {
 }
 
 model Media {
-  id         String    @id @default(cuid())
+  id String @id @default(cuid())
 
-  url        String
-  publicId   String?
-  type       MediaType
+  url      String
+  publicId String?
+  type     MediaType
 
-  listingId  String
-  listing    Listing   @relation(fields: [listingId], references: [id], map: "Media_listingId_fkey_v2")
+  listingId String
+  listing   Listing @relation(fields: [listingId], references: [id], map: "Media_listingId_fkey_v2")
 
-  createdAt  DateTime @default(now())
+  createdAt DateTime @default(now())
 }
 
 // ─── Reporting System ────────────────────────────────────────────────────────
@@ -238,25 +248,25 @@ model Report {
   description String?
   status      ReportStatus @default(PENDING)
 
-  listingId   String
-  listing     Listing  @relation(fields: [listingId], references: [id])
+  listingId String
+  listing   Listing @relation(fields: [listingId], references: [id])
 
-  reporterId  String
-  reporter    User     @relation("UserReports", fields: [reporterId], references: [id])
+  reporterId String
+  reporter   User   @relation("UserReports", fields: [reporterId], references: [id])
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 // ─── Activity Logging ─────────────────────────────────────────────────────────
 
 model ActivityLog {
-  id        String   @id @default(cuid())
-  action    String   // e.g. "USER_DISABLED", "LISTING_FEATURED"
-  details   String?  // optional context
-  actorId   String
-  actor     User     @relation("AdminActions", fields: [actorId], references: [id])
-  targetId  String?  // userId or listingId affected
+  id       String  @id @default(cuid())
+  action   String // e.g. "USER_DISABLED", "LISTING_FEATURED"
+  details  String? // optional context
+  actorId  String
+  actor    User    @relation("AdminActions", fields: [actorId], references: [id])
+  targetId String? // userId or listingId affected
 
   createdAt DateTime @default(now())
 }
@@ -270,27 +280,28 @@ enum ConversationType {
 }
 
 model Conversation {
-  id              String   @id @default(cuid())
+  id              String             @id @default(cuid())
   listingId       String?
   campaignId      String?
   buyerId         String
   ownerId         String
-  type            ConversationType @default(LISTING)
+  type            ConversationType   @default(LISTING)
   status          ConversationStatus @default(ACTIVE)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  lastMessageAt   DateTime @default(now())
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  lastMessageAt   DateTime           @default(now())
   subject         String?
-  pinnedMessageId String?  @unique
+  pinnedMessageId String?            @unique
 
-  listing         Listing?  @relation(fields: [listingId], references: [id], onDelete: Cascade)
-  campaign        CampaignRequest? @relation(fields: [campaignId], references: [id], onDelete: Cascade)
-  buyer           User     @relation("BuyerConversations", fields: [buyerId], references: [id], onDelete: Cascade)
-  owner           User     @relation("OwnerConversations", fields: [ownerId], references: [id], onDelete: Cascade)
-  messages        Message[]
-  reviews         Review[]
+  listing  Listing?         @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  campaign CampaignRequest? @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  buyer    User             @relation("BuyerConversations", fields: [buyerId], references: [id], onDelete: Cascade)
+  owner    User             @relation("OwnerConversations", fields: [ownerId], references: [id], onDelete: Cascade)
+  messages Message[]
+  reviews  Review[]
 
-  pinnedMessage   Message? @relation("PinnedMessage", fields: [pinnedMessageId], references: [id], onDelete: SetNull)
+  pinnedMessage       Message?             @relation("PinnedMessage", fields: [pinnedMessageId], references: [id], onDelete: SetNull)
+  pinnedConversations PinnedConversation[]
 
   @@unique([listingId, campaignId, buyerId, ownerId])
   @@index([buyerId])
@@ -316,6 +327,8 @@ model Message {
   fileName       String?
   fileSize       Int?
   replyToId      String?
+  isEdited       Boolean     @default(false)
+  editedAt       DateTime?
   isDeleted      Boolean     @default(false)
   deletedAt      DateTime?
   isStarred      Boolean     @default(false)
@@ -325,12 +338,13 @@ model Message {
   isDelivered    Boolean     @default(false)
   deliveredAt    DateTime?
 
-  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-  sender         User         @relation(fields: [senderId], references: [id], onDelete: Cascade)
-  replyTo        Message?     @relation("ReplyTo", fields: [replyToId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  replies        Message[]    @relation("ReplyTo")
-  reactions      MessageReaction[]
-  pinnedIn       Conversation? @relation("PinnedMessage")
+  conversation Conversation      @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender       User              @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  replyTo      Message?          @relation("ReplyTo", fields: [replyToId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  replies      Message[]         @relation("ReplyTo")
+  reactions    MessageReaction[]
+  pinnedIn     Conversation?     @relation("PinnedMessage")
+  hiddenBy     MessageHide[]
 
   @@index([conversationId])
   @@index([senderId])
@@ -338,14 +352,14 @@ model Message {
 }
 
 model MessageReaction {
-  id        String   @id @default(cuid())
-  emoji     String
-  
-  userId    String
-  user      User     @relation(fields:[userId], references:[id], onDelete: Cascade)
-  
+  id    String @id @default(cuid())
+  emoji String
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   messageId String
-  message   Message  @relation(fields:[messageId], references:[id], onDelete: Cascade)
+  message   Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
 
@@ -354,76 +368,101 @@ model MessageReaction {
   @@index([userId])
 }
 
+model PinnedConversation {
+  id             String   @id @default(cuid())
+  userId         String
+  conversationId String
+  createdAt      DateTime @default(now())
+
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, conversationId])
+  @@index([userId])
+  @@index([conversationId])
+}
+
+model MessageHide {
+  id        String   @id @default(cuid())
+  userId    String
+  messageId String
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, messageId])
+  @@index([userId])
+  @@index([messageId])
+}
+
 model Review {
-  id              String   @id @default(cuid())
+  id String @id @default(cuid())
 
-  rating          Int
-  comment         String?
+  rating  Int
+  comment String?
 
-  reviewerId      String
-  revieweeId      String
+  reviewerId String
+  revieweeId String
 
-  conversationId  String
+  conversationId String
 
-  isDeleted       Boolean  @default(false)
+  isDeleted Boolean @default(false)
 
-  reviewer        User @relation("ReviewsGiven", fields: [reviewerId], references: [id])
-  reviewee        User @relation("ReviewsReceived", fields: [revieweeId], references: [id])
+  reviewer User @relation("ReviewsGiven", fields: [reviewerId], references: [id])
+  reviewee User @relation("ReviewsReceived", fields: [revieweeId], references: [id])
 
-  conversation    Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
 
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([reviewerId, revieweeId, conversationId])
-
   @@index([revieweeId])
   @@index([reviewerId])
 }
 
 model ListingReview {
-  id             String   @id @default(cuid())
+  id String @id @default(cuid())
 
-  rating         Int
-  comment        String?
+  rating  Int
+  comment String?
 
   listingId      String
   reviewerId     String
   conversationId String?
 
-  isDeleted      Boolean  @default(false)
+  isDeleted Boolean @default(false)
 
-  listing        Listing  @relation(fields: [listingId], references: [id])
-  reviewer       User     @relation(fields: [reviewerId], references: [id])
+  listing  Listing @relation(fields: [listingId], references: [id])
+  reviewer User    @relation(fields: [reviewerId], references: [id])
 
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([listingId, reviewerId])
-
   @@index([listingId])
   @@index([reviewerId])
 }
 
 model UserReport {
-  id             String       @id @default(cuid())
+  id String @id @default(cuid())
 
-  reason         String
-  description    String?
-  status         ReportStatus @default(PENDING)
+  reason      String
+  description String?
+  status      ReportStatus @default(PENDING)
 
   reporterId     String
   reportedUserId String
   conversationId String?
 
-  reporter       User         @relation("UserReportSubmitter", fields: [reporterId], references: [id])
-  reportedUser   User         @relation("UserReportTarget", fields: [reportedUserId], references: [id])
+  reporter     User @relation("UserReportSubmitter", fields: [reporterId], references: [id])
+  reportedUser User @relation("UserReportTarget", fields: [reportedUserId], references: [id])
 
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([reporterId, reportedUserId, conversationId])
-
   @@index([reporterId])
   @@index([reportedUserId])
 }
@@ -452,9 +491,9 @@ model UserActivity {
   categoryId String?
   searchTerm String?
 
-  createdAt  DateTime     @default(now())
+  createdAt DateTime @default(now())
 
-  user       User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([categoryId])
@@ -462,16 +501,16 @@ model UserActivity {
 }
 
 model Notification {
-  id          String              @id @default(cuid())
-  userId      String
-  title       String
-  message     String
-  imageUrl    String?
-  actionUrl   String?
-  type        NotificationType
-  channel     NotificationChannel @default(IN_APP)
-  isRead      Boolean             @default(false)
-  createdAt   DateTime            @default(now())
+  id        String              @id @default(cuid())
+  userId    String
+  title     String
+  message   String
+  imageUrl  String?
+  actionUrl String?
+  type      NotificationType
+  channel   NotificationChannel @default(IN_APP)
+  isRead    Boolean             @default(false)
+  createdAt DateTime            @default(now())
 
   // Analytics fields directly on Notification as requested
   deliveredAt DateTime?
@@ -479,7 +518,7 @@ model Notification {
   clickedAt   DateTime?
   dismissedAt DateTime?
 
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([isRead])
@@ -487,15 +526,15 @@ model Notification {
 }
 
 model UserRecommendation {
-  id         String   @id @default(cuid())
-  userId     String
-  listingId  String
-  score      Float
+  id        String @id @default(cuid())
+  userId    String
+  listingId String
+  score     Float
 
-  createdAt  DateTime @default(now())
+  createdAt DateTime @default(now())
 
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  listing    Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([listingId])
@@ -508,8 +547,8 @@ model RecentlyViewed {
   listingId String
   viewedAt  DateTime @default(now())
 
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  listing   Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([listingId])
@@ -523,7 +562,7 @@ model PushSubscription {
   auth      String
   createdAt DateTime @default(now())
 
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
 }
@@ -536,29 +575,28 @@ model SavedSearch {
   categoryId String?
   createdAt  DateTime @default(now())
 
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
 }
 
 model NotificationCampaign {
-  id            String         @id @default(cuid())
-  title         String
-  message       String
-  imageUrl      String?
-  actionUrl     String?
+  id             String         @id @default(cuid())
+  title          String
+  message        String
+  imageUrl       String?
+  actionUrl      String?
   targetAudience AudienceType
-  targetState   String?
-  targetCity    String?
-  sendType      CampaignType
-  status        CampaignStatus @default(DRAFT)
-  scheduledAt   DateTime?
-  sentAt        DateTime?
-  openCount     Int            @default(0)
-  clickCount    Int            @default(0)
-  createdAt     DateTime       @default(now())
+  targetState    String?
+  targetCity     String?
+  sendType       CampaignType
+  status         CampaignStatus @default(DRAFT)
+  scheduledAt    DateTime?
+  sentAt         DateTime?
+  openCount      Int            @default(0)
+  clickCount     Int            @default(0)
+  createdAt      DateTime       @default(now())
 }
-
 
 model AnnouncementBanner {
   id          String   @id @default(cuid())
@@ -573,17 +611,17 @@ model AnnouncementBanner {
 }
 
 model NotificationPreference {
-  id             String  @id @default(cuid())
-  userId         String  @unique
-  messages       Boolean @default(true)
-  reviews        Boolean @default(true)
-  promotions     Boolean @default(true)
-  nearbyAlerts   Boolean @default(true)
-  email          Boolean @default(true)
-  browserPush    Boolean @default(true)
-  weeklyReports  Boolean @default(true)
+  id            String  @id @default(cuid())
+  userId        String  @unique
+  messages      Boolean @default(true)
+  reviews       Boolean @default(true)
+  promotions    Boolean @default(true)
+  nearbyAlerts  Boolean @default(true)
+  email         Boolean @default(true)
+  browserPush   Boolean @default(true)
+  weeklyReports Boolean @default(true)
 
-  user           User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 // ─── Influencer & Outreach ────────────────────────────────────────────────────
@@ -600,50 +638,50 @@ enum InfluencerStatus {
 }
 
 model InfluencerProfile {
-  id              String           @id @default(cuid())
-  userId          String           @unique
-  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  type            InfluencerType
-  status          InfluencerStatus @default(PENDING)
+  type   InfluencerType
+  status InfluencerStatus @default(PENDING)
 
   category        String?
   followers       Int?
   city            String?
   profileImage    String?
-  portfolioImages Json?            // Array of URLs
-  rating          Float            @default(0)
-  totalReviews    Int              @default(0)
-  totalCampaigns  Int              @default(0)
-  isPublic        Boolean          @default(true)
+  portfolioImages Json? // Array of URLs
+  rating          Float   @default(0)
+  totalReviews    Int     @default(0)
+  totalCampaigns  Int     @default(0)
+  isPublic        Boolean @default(true)
 
-  approvedBy      String?
-  approvedAt      DateTime?
+  approvedBy String?
+  approvedAt DateTime?
 
-  companyName     String?
-  description     String?          @db.Text
-  pricePerPost    Float?
+  companyName  String?
+  description  String? @db.Text
+  pricePerPost Float?
 
-  instagramUrl    String?
-  youtubeUrl      String?
-  twitterUrl      String?
-  linkedinUrl     String?
-  facebookUrl     String?
+  instagramUrl String?
+  youtubeUrl   String?
+  twitterUrl   String?
+  linkedinUrl  String?
+  facebookUrl  String?
 
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  reviews         InfluencerReview[] @relation("InfluencerReviews")
-  reports         InfluencerReport[] @relation("InfluencerReports")
-  campaignRequests CampaignRequest[] @relation("InfluencerCampaignRequests")
-  portfolio       PortfolioItem[]
-  favoritedBy     FavoriteInfluencer[]
+  reviews          InfluencerReview[]   @relation("InfluencerReviews")
+  reports          InfluencerReport[]   @relation("InfluencerReports")
+  campaignRequests CampaignRequest[]    @relation("InfluencerCampaignRequests")
+  portfolio        PortfolioItem[]
+  favoritedBy      FavoriteInfluencer[]
 
-  isAvailable     Boolean          @default(true)
-  responseTime    Int?
-  profileViews    Int              @default(0)
-  acceptanceRate  Float            @default(100)
-  responseRate    Float            @default(100)
+  availabilityStatus AvailabilityStatus @default(AVAILABLE)
+  responseTime       String?
+  profileViews       Int                @default(0)
+  acceptanceRate     Float              @default(100)
+  responseRate       Float              @default(100)
 
   @@index([status])
   @@index([type])
@@ -652,17 +690,17 @@ model InfluencerProfile {
 }
 
 model InfluencerReview {
-  id              String   @id @default(cuid())
-  rating          Int
-  comment         String?  @db.Text
-  reviewerId      String
-  influencerId    String
-  
-  reviewer        User              @relation("InfluencerReviewsGiven", fields: [reviewerId], references: [id])
-  influencer      InfluencerProfile @relation("InfluencerReviews", fields: [influencerId], references: [id], onDelete: Cascade)
+  id           String  @id @default(cuid())
+  rating       Int
+  comment      String? @db.Text
+  reviewerId   String
+  influencerId String
 
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  reviewer   User              @relation("InfluencerReviewsGiven", fields: [reviewerId], references: [id])
+  influencer InfluencerProfile @relation("InfluencerReviews", fields: [influencerId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([reviewerId, influencerId])
   @@index([influencerId])
@@ -670,19 +708,19 @@ model InfluencerReview {
 }
 
 model InfluencerReport {
-  id             String       @id @default(cuid())
-  reason         String
-  description    String?      @db.Text
-  status         ReportStatus @default(PENDING)
+  id          String       @id @default(cuid())
+  reason      String
+  description String?      @db.Text
+  status      ReportStatus @default(PENDING)
 
-  reporterId     String
-  influencerId   String
+  reporterId   String
+  influencerId String
 
-  reporter       User              @relation("InfluencerReportsSubmitted", fields: [reporterId], references: [id])
-  influencer     InfluencerProfile @relation("InfluencerReports", fields: [influencerId], references: [id], onDelete: Cascade)
+  reporter   User              @relation("InfluencerReportsSubmitted", fields: [reporterId], references: [id])
+  influencer InfluencerProfile @relation("InfluencerReports", fields: [influencerId], references: [id], onDelete: Cascade)
 
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([reporterId])
   @@index([influencerId])
@@ -706,63 +744,63 @@ enum OutreachCampaignType {
 }
 
 model CampaignRequest {
-  id                  String               @id @default(cuid())
+  id String @id @default(cuid())
 
   requesterId         String
   influencerProfileId String
 
-  title               String
-  description         String               @db.Text
-  budget              Float?
-  timeline            String?
+  title       String
+  description String  @db.Text
+  budget      Float?
+  timeline    String?
 
-  campaignType        OutreachCampaignType
+  campaignType OutreachCampaignType
 
-  status              CampaignRequestStatus @default(PENDING)
+  status CampaignRequestStatus @default(PENDING)
 
-  price               Float?
-  completedAt         DateTime?
+  price       Float?
+  completedAt DateTime?
 
-  createdAt           DateTime             @default(now())
-  updatedAt           DateTime             @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  requester           User                 @relation("CampaignRequestsSent", fields: [requesterId], references: [id], onDelete: Cascade)
-  influencerProfile   InfluencerProfile    @relation("InfluencerCampaignRequests", fields: [influencerProfileId], references: [id], onDelete: Cascade)
-  conversations       Conversation[]
-  deliverables        CampaignDeliverable[]
+  requester         User                  @relation("CampaignRequestsSent", fields: [requesterId], references: [id], onDelete: Cascade)
+  influencerProfile InfluencerProfile     @relation("InfluencerCampaignRequests", fields: [influencerProfileId], references: [id], onDelete: Cascade)
+  conversations     Conversation[]
+  deliverables      CampaignDeliverable[]
 
   @@index([requesterId])
   @@index([influencerProfileId])
 }
 
 model PortfolioItem {
-  id                String            @id @default(cuid())
-  title             String
-  description       String?           @db.Text
-  imageUrl          String
-  platform          String?
-  brandName         String?
-  campaignType      String?
-  campaignYear      Int?
-  
-  influencerId      String
-  influencer        InfluencerProfile @relation(fields: [influencerId], references: [id], onDelete: Cascade)
+  id           String  @id @default(cuid())
+  title        String
+  description  String? @db.Text
+  imageUrl     String
+  platform     String?
+  brandName    String?
+  campaignType String?
+  campaignYear Int?
 
-  createdAt         DateTime          @default(now())
-  updatedAt         DateTime          @updatedAt
+  influencerId String
+  influencer   InfluencerProfile @relation(fields: [influencerId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([influencerId])
 }
 
 model FavoriteInfluencer {
-  id                String            @id @default(cuid())
-  userId            String
-  influencerId      String
+  id           String @id @default(cuid())
+  userId       String
+  influencerId String
 
-  user              User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  influencer        InfluencerProfile @relation(fields: [influencerId], references: [id], onDelete: Cascade)
+  user       User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  influencer InfluencerProfile @relation(fields: [influencerId], references: [id], onDelete: Cascade)
 
-  createdAt         DateTime          @default(now())
+  createdAt DateTime @default(now())
 
   @@unique([userId, influencerId])
   @@index([userId])
@@ -770,19 +808,19 @@ model FavoriteInfluencer {
 }
 
 model CampaignDeliverable {
-  id                String            @id @default(cuid())
-  title             String
-  fileUrl           String
-  fileType          String?
-  
+  id       String  @id @default(cuid())
+  title    String
+  fileUrl  String
+  fileType String?
+
   uploadedById      String
   campaignRequestId String
 
-  uploadedBy        User              @relation(fields: [uploadedById], references: [id], onDelete: Cascade)
-  campaignRequest   CampaignRequest   @relation(fields: [campaignRequestId], references: [id], onDelete: Cascade)
+  uploadedBy      User            @relation(fields: [uploadedById], references: [id], onDelete: Cascade)
+  campaignRequest CampaignRequest @relation(fields: [campaignRequestId], references: [id], onDelete: Cascade)
 
-  createdAt         DateTime          @default(now())
-  updatedAt         DateTime          @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([campaignRequestId])
   @@index([uploadedById])

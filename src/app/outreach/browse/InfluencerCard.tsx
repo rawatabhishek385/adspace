@@ -1,7 +1,8 @@
 import { InfluencerProfile } from "@prisma/client";
 import Link from "next/link";
+import InfluencerCardPresence from "./InfluencerCardPresence";
 
-type ProfileWithUser = InfluencerProfile & { user: { name: string; avatar?: string | null } };
+type ProfileWithUser = InfluencerProfile & { user: { name: string; avatar?: string | null; isOnline?: boolean; lastSeen?: Date | null } };
 
 export default function InfluencerCard({ profile }: { profile: ProfileWithUser }) {
   const isIndividual = profile.type === "INDIVIDUAL";
@@ -38,6 +39,13 @@ export default function InfluencerCard({ profile }: { profile: ProfileWithUser }
             )}
           </div>
         </div>
+
+        <InfluencerCardPresence 
+          userId={profile.userId}
+          initialIsOnline={profile.user.isOnline || false}
+          initialAvailabilityStatus={profile.availabilityStatus}
+          initialResponseTime={profile.responseTime}
+        />
 
         <div className="flex flex-col items-start gap-2 mt-1 mb-4">
           <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-md ${badgeColor}`}>

@@ -63,6 +63,13 @@ export async function GET() {
       orderBy: { lastMessageAt: "desc" },
     });
 
+    // Fetch pinned conversations for the user
+    const pinnedConversations = await prisma.pinnedConversation.findMany({
+      where: { userId },
+      select: { conversationId: true }
+    });
+    const pinnedSet = new Set(pinnedConversations.map(p => p.conversationId));
+
     // Format the response to make it easy for the frontend to consume
     const formattedConversations = conversations.map((conv) => {
       const isOwner = conv.ownerId === userId;
@@ -74,6 +81,7 @@ export async function GET() {
         subject: conv.subject,
         status: conv.status,
         updatedAt: conv.updatedAt,
+        isPinned: pinnedSet.has(conv.id),
         listing: conv.listing ? {
           id: conv.listing.id,
           title: conv.listing.title,
@@ -98,6 +106,13 @@ export async function GET() {
           : null,
         unreadCount: conv._count.messages,
       };
+    });
+
+    // Sort pinned conversations to the top, then by lastMessageAt
+    formattedConversations.sort((a, b) => {
+      if (a.isPinned && !b.isPinned) return -1;
+      if (!a.isPinned && b.isPinned) return 1;
+      return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
     });
 
     return NextResponse.json(formattedConversations);

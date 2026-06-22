@@ -1,38 +1,45 @@
-const onlineUsers = require('../utils/onlineUsers');
+const userSocketMap = require('../utils/userSocketMap');
 const activeRooms = require('../utils/activeRooms');
 const typingUsers = require('../utils/typingUsers');
 const logger = require('../utils/logger');
+const prisma = require('../utils/prisma');
 
-module.exports = (io, socket) => {
+module.exports = async (io, socket) => {
   logger.info(`Socket disconnected: ${socket.id}`);
   
-  let disconnectedUserId = null;
-  for (const [userId, sockets] of onlineUsers.entries()) {
-    if (sockets.has && sockets.has(socket.id)) {
-      sockets.delete(socket.id);
-      if (sockets.size === 0) {
-        onlineUsers.delete(userId);
-        disconnectedUserId = userId;
-      }
-      break;
-    } else if (sockets === socket.id) {
-      onlineUsers.delete(userId);
-      disconnectedUserId = userId;
-      break;
-    }
-  }
+  if (socket.user?.id && userSocketMap.has(socket.user.id)) {
+    const userSockets = userSocketMap.get(socket.user.id);
+    userSockets.delete(socket.id);
 
-  if (disconnectedUserId) {
-    logger.info(`User ${disconnectedUserId} went offline.`);
-    io.emit("presenceUpdate", { userId: disconnectedUserId, isOnline: false, lastSeen: new Date() });
-    
-    // Clean up typingUsers if this user was typing anywhere
-    for (const [conversationId, users] of typingUsers.entries()) {
-      if (users.has(disconnectedUserId)) {
-        users.delete(disconnectedUserId);
-        io.to(`conversation:${conversationId}`).emit('userStoppedTyping', { userId: disconnectedUserId });
-        if (users.size === 0) {
-          typingUsers.delete(conversationId);
+    if (userSockets.size === 0) {
+      userSocketMap.delete(socket.user.id);
+      const disconnectedUserId = socket.user.id;
+      
+      logger.info(`User ${disconnectedUserId} went offline.`);
+      
+      const lastSeen = new Date();
+      
+      try {
+        await prisma.user.update({
+          where: { id: disconnectedUserId },
+          data: { isOnline: false, lastSeen }
+        });
+      } catch (error) {
+        logger.error(`Error updating offline status for ${disconnectedUserId}:`, error);
+      }
+
+      io.emit("presenceUpdate", { userId: disconnectedUserId, isOnline: false, lastSeen });
+      io.emit("userOffline", { userId: disconnectedUserId, lastSeen });
+      io.emit("lastSeenUpdate", { userId: disconnectedUserId, lastSeen });
+      
+      // Clean up typingUsers if this user was typing anywhere
+      for (const [conversationId, users] of typingUsers.entries()) {
+        if (users.has(disconnectedUserId)) {
+          users.delete(disconnectedUserId);
+          io.to(`conversation:${conversationId}`).emit('userStoppedTyping', { userId: disconnectedUserId });
+          if (users.size === 0) {
+            typingUsers.delete(conversationId);
+          }
         }
       }
     }

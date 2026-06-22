@@ -118,6 +118,16 @@ export default function ChatPage({ params }: { params: Promise<{ conversationId:
       const data = await res.json();
       setConversation(data.conversation);
       
+      const otherUserId = data.conversation.buyer.id === session?.user?.id ? data.conversation.owner.id : data.conversation.buyer.id;
+      if (otherUserId) {
+        fetch(`/api/user/activity-status?userId=${otherUserId}`)
+          .then(r => r.json())
+          .then(presence => {
+            setOtherUserPresence({ isOnline: presence.isOnline, lastSeen: presence.lastSeen });
+          })
+          .catch(err => console.error("Failed to load presence", err));
+      }
+
       setMessages((prev) => {
         if (prev.length !== data.messages.length) {
           setTimeout(scrollToBottom, 100);
@@ -209,12 +219,35 @@ export default function ChatPage({ params }: { params: Promise<{ conversationId:
       });
     };
 
-    const handleMessageDeleted = ({ messageId }: { messageId: string }) => {
-      setMessages((prev) => prev.map(m => m.id === messageId ? { ...m, isDeleted: true } : m));
+    const handleMessageDeleted = ({ messageId, deleteForEveryone, deletedForUserId }: { messageId: string, deleteForEveryone: boolean, deletedForUserId?: string }) => {
+      if (deleteForEveryone) {
+        setMessages((prev) => prev.map(m => m.id === messageId ? { ...m, isDeleted: true, content: "This message was deleted", imageUrl: undefined, fileUrl: undefined, fileName: undefined } : m));
+      } else if (deletedForUserId === session.user.id) {
+        // Remove from UI for this user
+        setMessages((prev) => prev.filter(m => m.id !== messageId));
+      }
     };
 
-    const handleMessageReaction = ({ messageId, reactions }: { messageId: string, reactions: any[] }) => {
-      setMessages((prev) => prev.map(m => m.id === messageId ? { ...m, reactions } : m));
+    const handleReactionAdded = ({ messageId, emoji, userId, reactionId }: { messageId: string, emoji: string, userId: string, reactionId: string }) => {
+      setMessages((prev) => prev.map(m => {
+        if (m.id !== messageId) return m;
+        const currentReactions = m.reactions || [];
+        // Only add if not already present
+        if (currentReactions.some(r => r.emoji === emoji && r.userId === userId)) return m;
+        return { ...m, reactions: [...currentReactions, { id: reactionId, emoji, userId }] };
+      }));
+    };
+
+    const handleReactionRemoved = ({ messageId, emoji, userId }: { messageId: string, emoji: string, userId: string }) => {
+      setMessages((prev) => prev.map(m => {
+        if (m.id !== messageId) return m;
+        const currentReactions = m.reactions || [];
+        return { ...m, reactions: currentReactions.filter(r => !(r.emoji === emoji && r.userId === userId)) };
+      }));
+    };
+
+    const handleMessageEdited = ({ messageId, content, isEdited, editedAt }: { messageId: string, content: string, isEdited: boolean, editedAt: string }) => {
+      setMessages((prev) => prev.map(m => m.id === messageId ? { ...m, content, isEdited, editedAt } : m));
     };
 
     const handleMessageStarred = ({ messageId, isStarred }: { messageId: string, isStarred: boolean }) => {
@@ -238,9 +271,11 @@ export default function ChatPage({ params }: { params: Promise<{ conversationId:
     socket.on("userTyping", handleUserTyping);
     socket.on("userStoppedTyping", handleUserStoppedTyping);
     socket.on("messageDeleted", handleMessageDeleted);
-    socket.on("messageReaction", handleMessageReaction);
+    socket.on("reactionAdded", handleReactionAdded);
+    socket.on("reactionRemoved", handleReactionRemoved);
+    socket.on("messageEdited", handleMessageEdited);
     socket.on("messageStarred", handleMessageStarred);
-    socket.on("messagePinned", handleMessagePinned);
+    socket.on("conversationPinned", handleMessagePinned); // Assuming handleMessagePinned is repurposed
     socket.on("presenceUpdate", handlePresenceUpdate);
 
     return () => {
@@ -254,9 +289,11 @@ export default function ChatPage({ params }: { params: Promise<{ conversationId:
       socket.off("userTyping", handleUserTyping);
       socket.off("userStoppedTyping", handleUserStoppedTyping);
       socket.off("messageDeleted", handleMessageDeleted);
-      socket.off("messageReaction", handleMessageReaction);
+      socket.off("reactionAdded", handleReactionAdded);
+      socket.off("reactionRemoved", handleReactionRemoved);
+      socket.off("messageEdited", handleMessageEdited);
       socket.off("messageStarred", handleMessageStarred);
-      socket.off("messagePinned", handleMessagePinned);
+      socket.off("conversationPinned", handleMessagePinned);
       socket.off("presenceUpdate", handlePresenceUpdate);
     };
   }, [conversationId, session?.user?.id]);
@@ -282,17 +319,37 @@ export default function ChatPage({ params }: { params: Promise<{ conversationId:
       setSearchResults([]);
       return;
     }
-    const lowerQuery = searchQuery.toLowerCase();
-    const results = messages
-      .map((m, idx) => (!m.isDeleted && m.messageType === "TEXT" && m.content.toLowerCase().includes(lowerQuery) ? idx : -1))
-      .filter(idx => idx !== -1);
-    
-    setSearchResults(results);
-    if (results.length > 0) {
-      setCurrentResultIndex(results.length - 1); // Start at most recent
-      scrollToMessageIndex(results[results.length - 1]);
-    }
-  }, [searchQuery, messages]);
+
+    const performSearch = async () => {
+      try {
+        const res = await fetch(`/api/messages/search?conversationId=${conversationId}&query=${encodeURIComponent(searchQuery)}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success && data.messages) {
+            // Find indices in the current message list
+            const foundMessageIds = new Set(data.messages.map((m: Message) => m.id));
+            const results = messages
+              .map((m, idx) => foundMessageIds.has(m.id) ? idx : -1)
+              .filter(idx => idx !== -1);
+              
+            setSearchResults(results);
+            if (results.length > 0) {
+              setCurrentResultIndex(results.length - 1); // Start at most recent
+              scrollToMessageIndex(results[results.length - 1]);
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Search failed:", err);
+      }
+    };
+
+    const delayDebounceFn = setTimeout(() => {
+      performSearch();
+    }, 500);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchQuery, messages, conversationId]);
 
   const scrollToMessageIndex = (index: number) => {
     const msg = messages[index];
@@ -376,17 +433,29 @@ export default function ChatPage({ params }: { params: Promise<{ conversationId:
       };
       socket.on("messageSentAck", onAck);
 
-      socket.emit("newMessage", { 
-        conversationId, 
-        senderId: session!.user.id, 
-        tempId,
-        ...data,
-        replyToId: replyToMessage?.id
-      });
+      if (replyToMessage) {
+        socket.emit("replyMessage", { 
+          conversationId, 
+          content: data.content,
+          messageType: data.messageType,
+          fileUrl: data.fileUrl,
+          fileName: data.fileName,
+          fileSize: data.fileSize,
+          replyToId: replyToMessage.id,
+          tempId
+        });
+      } else {
+        socket.emit("newMessage", { 
+          conversationId, 
+          senderId: session!.user.id, 
+          tempId,
+          ...data
+        });
+      }
       socket.emit("stopTyping", { conversationId, userId: session!.user.id });
 
       setTimeout(() => {
-        if (!ackReceived) {
+        if (!ackReceived && !replyToMessage) { // Old newMessage logic expects fallback
           console.warn("Socket ack timeout, falling back to HTTP");
           socket.off("messageSentAck", onAck);
           fallbackToHttp();
@@ -399,17 +468,28 @@ export default function ChatPage({ params }: { params: Promise<{ conversationId:
     setReplyToMessage(null);
   };
 
-  const handleDeleteMessage = (messageId: string) => {
+  const handleEditMessage = (messageId: string, newContent: string) => {
     const socket = getSocket();
     if (socket && session?.user) {
-      socket.emit("deleteMessage", { messageId, conversationId, userId: session.user.id });
+      socket.emit("messageEdited", { messageId, content: newContent });
     }
   };
 
-  const handleReactMessage = (messageId: string, emoji: string) => {
+  const handleDeleteMessage = (messageId: string, deleteForEveryone: boolean = true) => {
     const socket = getSocket();
     if (socket && session?.user) {
-      socket.emit("reactMessage", { messageId, conversationId, userId: session.user.id, emoji });
+      socket.emit("messageDeleted", { messageId, deleteForEveryone });
+    }
+  };
+
+  const handleReactMessage = (messageId: string, emoji: string, isRemoving: boolean = false) => {
+    const socket = getSocket();
+    if (socket && session?.user) {
+      if (isRemoving) {
+        socket.emit("reactionRemoved", { messageId, emoji });
+      } else {
+        socket.emit("reactionAdded", { messageId, emoji });
+      }
     }
   };
 

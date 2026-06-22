@@ -6,11 +6,12 @@ import { getSocket } from "@/lib/socket";
 
 interface ProfilePresenceProps {
   userId: string;
+  initialIsOnline: boolean;
   initialLastSeen: string | null;
 }
 
-export default function ProfilePresence({ userId, initialLastSeen }: ProfilePresenceProps) {
-  const [isOnline, setIsOnline] = useState(false);
+export default function ProfilePresence({ userId, initialIsOnline, initialLastSeen }: ProfilePresenceProps) {
+  const [isOnline, setIsOnline] = useState(initialIsOnline);
   const [lastSeen, setLastSeen] = useState<string | null>(initialLastSeen);
 
   useEffect(() => {
@@ -22,7 +23,12 @@ export default function ProfilePresence({ userId, initialLastSeen }: ProfilePres
 
     if (!s) {
       const { io } = require("socket.io-client");
-      s = io(process.env.NEXT_PUBLIC_SOCKET_URL || "http://127.0.0.1:3001", { path: "/socket.io/" });
+      // Use an anonymous session id or fake user id to satisfy the backend requirement
+      const tempId = `anon-${Math.random().toString(36).substring(2, 10)}`;
+      s = io(process.env.NEXT_PUBLIC_SOCKET_URL || "http://127.0.0.1:3001", { 
+        path: "/socket.io/",
+        auth: { userId: tempId }
+      });
       tempSocket = true;
     }
 

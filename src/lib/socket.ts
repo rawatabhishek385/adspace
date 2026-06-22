@@ -11,7 +11,10 @@ export const connectSocket = (userId: string): Socket => {
       reconnection: true,
       reconnectionAttempts: 10,
       reconnectionDelay: 1000,
+      auth: { userId },
     });
+  } else {
+    socket.auth = { userId };
   }
 
   if (socket.disconnected) {
