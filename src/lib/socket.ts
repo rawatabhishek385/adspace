@@ -8,15 +8,29 @@ export const connectSocket = (userId: string): Socket => {
   if (!socket) {
     socket = io(SOCKET_URL, {
       autoConnect: false,
+      reconnection: true,
+      reconnectionAttempts: 10,
+      reconnectionDelay: 1000,
     });
   }
 
   if (socket.disconnected) {
     socket.connect();
     
-    // Register the user online immediately after connection
+    socket.off("connect");
     socket.on("connect", () => {
-      socket?.emit("userOnline", userId);
+      console.log("connected");
+      socket?.emit("joinUserRoom", userId);
+    });
+
+    socket.off("disconnect");
+    socket.on("disconnect", () => {
+      console.log("disconnected");
+    });
+
+    socket.io.off("reconnect_attempt");
+    socket.io.on("reconnect_attempt", () => {
+      console.log("reconnecting");
     });
   }
 

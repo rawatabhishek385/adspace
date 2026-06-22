@@ -130,7 +130,7 @@ export default function ChatPage({ params }: { params: Promise<{ conversationId:
         await fetch(`/api/messages/${conversationId}`, { method: "PATCH" });
         const socket = getSocket();
         if (socket && session?.user?.id) {
-          socket.emit("markAsRead", { conversationId, readerId: session.user.id });
+          socket.emit("messageRead", { conversationId, readerId: session.user.id });
         }
       }
     } catch (err: unknown) {
@@ -166,7 +166,7 @@ export default function ChatPage({ params }: { params: Promise<{ conversationId:
       });
 
       if (newMessage.senderId !== session.user.id) {
-        socket.emit("markAsRead", { conversationId, readerId: session.user.id });
+        socket.emit("messageRead", { conversationId, readerId: session.user.id });
         fetch(`/api/messages/${conversationId}`, { method: "PATCH" }).catch(() => {});
         playNotificationSound();
         
@@ -234,7 +234,7 @@ export default function ChatPage({ params }: { params: Promise<{ conversationId:
 
     socket.on("receiveMessage", handleReceiveMessage);
     socket.on("messageSentAck", handleMessageSentAck);
-    socket.on("messagesRead", handleMessagesRead);
+    socket.on("messageReadUpdate", handleMessagesRead);
     socket.on("userTyping", handleUserTyping);
     socket.on("userStoppedTyping", handleUserStoppedTyping);
     socket.on("messageDeleted", handleMessageDeleted);
@@ -250,7 +250,7 @@ export default function ChatPage({ params }: { params: Promise<{ conversationId:
       socket.io.off("reconnect_attempt");
       socket.off("receiveMessage", handleReceiveMessage);
       socket.off("messageSentAck", handleMessageSentAck);
-      socket.off("messagesRead", handleMessagesRead);
+      socket.off("messageReadUpdate", handleMessagesRead);
       socket.off("userTyping", handleUserTyping);
       socket.off("userStoppedTyping", handleUserStoppedTyping);
       socket.off("messageDeleted", handleMessageDeleted);
@@ -376,7 +376,7 @@ export default function ChatPage({ params }: { params: Promise<{ conversationId:
       };
       socket.on("messageSentAck", onAck);
 
-      socket.emit("sendMessage", { 
+      socket.emit("newMessage", { 
         conversationId, 
         senderId: session!.user.id, 
         tempId,

@@ -82,13 +82,15 @@ export default function NotificationBell() {
       fetchUnreadCount();
     };
 
-    socket.on("newNotification", handleNewNotification);
-    socket.on("notificationReadSync", handleReadSync);
+    socket.on("notificationReceived", handleNewNotification);
+    socket.on("notificationReadUpdate", handleReadSync);
+    socket.on("adminAnnouncement", handleNewNotification); // Same handler increments unread
 
     return () => {
       clearInterval(interval);
-      socket.off("newNotification", handleNewNotification);
-      socket.off("notificationReadSync", handleReadSync);
+      socket.off("notificationReceived", handleNewNotification);
+      socket.off("notificationReadUpdate", handleReadSync);
+      socket.off("adminAnnouncement", handleNewNotification);
       abortController.abort();
     };
   }, [session?.user?.id, hasFetched]);

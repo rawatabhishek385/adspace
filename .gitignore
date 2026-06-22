@@ -2,6 +2,7 @@
 
 # dependencies
 /node_modules
+socket-server/node_modules/
 /.pnp
 .pnp.*
 .yarn/*
@@ -31,7 +32,12 @@ yarn-error.log*
 .pnpm-debug.log*
 
 # env files (can opt-in for committing if needed)
-.env*
+
+.env
+.env.local
+.env.development.local
+.env.production.local
+socket-server/.env
 
 # vercel
 .vercel
@@ -42,4 +48,16 @@ next-env.d.ts
 
 /src/generated/prisma
 
-/src/generated/prisma
+
+
+# Logs
+*.log
+
+# socket logs
+socket-server/*.log
+
+# Render
+socket-server/.render
+
+# OS files
+Thumbs.db

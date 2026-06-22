@@ -109,11 +109,15 @@ export default async function HomePage() {
             sizes="100vw"
           />
         </div>
+        
+        {/* Mobile/Tablet Overlay for better text readability */}
+        <div className="absolute inset-0 z-0 bg-white/70 lg:bg-transparent pointer-events-none"></div>
+        <div className="absolute inset-0 z-0 bg-gradient-to-b from-white/95 via-white/70 to-white/90 lg:hidden pointer-events-none"></div>
 
         <div className="max-w-[1400px] mx-auto w-full px-4 relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
           {/* Left Column Content */}
           <div className="max-w-xl py-4 lg:py-0">
-            <div className="inline-flex max-w-full items-start sm:items-center gap-1.5 px-3 py-1 bg-blue-50 rounded-2xl sm:rounded-full text-blue-600 text-xs sm:text-sm font-medium mb-4 shadow-sm border border-blue-100">
+            <div className="inline-flex max-w-full items-start sm:items-center gap-1.5 px-3 py-1 bg-blue-50/90 backdrop-blur-md rounded-2xl sm:rounded-full text-blue-600 text-xs sm:text-sm font-medium mb-4 shadow-sm border border-blue-100">
               
               <span className="leading-tight">Asia's Leading Advertising Space Marketplace</span>
             </div>
