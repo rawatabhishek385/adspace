@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth.config";
-import { PrismaClient, CampaignStatus, AudienceType } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
+import { CampaignStatus } from "@prisma/client";
+
 
 
 
@@ -62,16 +64,16 @@ export async function POST(req: Request) {
         where: { id: campaign.id },
         data: { status: "SENT", sentAt: new Date() }
       });
-      
+
       // 2. Determine target users
       let userQuery: any = { isActive: true };
-      
+
       if (targetAudience === "LOCATION_SPECIFIC") {
         if (targetState) userQuery.state = targetState;
         if (targetCity) userQuery.city = { contains: targetCity };
       }
       // Note: for a fully scaled app, this logic should be a background job.
-      
+
       // 3. Fetch user IDs
       const users = await prisma.user.findMany({
         where: userQuery,
