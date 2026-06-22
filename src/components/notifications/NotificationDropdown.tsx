@@ -47,12 +47,14 @@ export default function NotificationDropdown({ onClose, onUnreadCountChange }: N
       setNotifications(prev => prev.map(n => n.id === notificationId ? { ...n, isRead: true } : n));
     };
 
-    socket.on("newNotification", handleNewNotification);
-    socket.on("notificationReadSync", handleReadSync);
+    socket.on("notificationReceived", handleNewNotification);
+    socket.on("notificationReadUpdate", handleReadSync);
+    socket.on("adminAnnouncement", handleNewNotification);
 
     return () => {
-      socket.off("newNotification", handleNewNotification);
-      socket.off("notificationReadSync", handleReadSync);
+      socket.off("notificationReceived", handleNewNotification);
+      socket.off("notificationReadUpdate", handleReadSync);
+      socket.off("adminAnnouncement", handleNewNotification);
     };
   }, []);
 

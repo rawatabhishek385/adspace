@@ -66,26 +66,26 @@ function CategoryCard({ cat, idx }: { cat: CategoryData; idx: number }) {
         className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
       />
       
-      {/* Glassy dark gradient starting from middle */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/60 to-transparent top-[30%]"></div>
+      {/* Light gradient overlay */}
+      <div className="absolute inset-0 bg-gradient-to-t from-white/95 via-white/80 to-white/10 top-[20%]"></div>
 
       <div className="absolute bottom-0 left-0 p-6 w-full flex flex-col sm:flex-row sm:items-end justify-between z-10 gap-4">
         <div>
-          <h3 className="text-white font-bold text-2xl tracking-tight mb-3 drop-shadow-md line-clamp-1">
+          <h3 className="text-slate-900 font-bold text-2xl tracking-tight mb-3 drop-shadow-sm line-clamp-1">
             {cat.name}
           </h3>
           
           <div className="flex items-center gap-2">
-             <div className="px-3.5 py-1.5 bg-white/20 backdrop-blur-md rounded-full text-white text-[13px] font-medium border border-white/10 flex items-center gap-1.5">
-               <span className="text-white opacity-90">★</span> 4.9
+             <div className="px-3.5 py-1.5 bg-white/70 backdrop-blur-md rounded-full text-slate-800 text-[13px] font-semibold border border-white/50 flex items-center gap-1.5 shadow-sm">
+               <span className="text-amber-500">★</span> 4.9
              </div>
-             <div className="px-3.5 py-1.5 bg-white/20 backdrop-blur-md rounded-full text-white text-[13px] font-medium border border-white/10 whitespace-nowrap">
+             <div className="px-3.5 py-1.5 bg-white/70 backdrop-blur-md rounded-full text-slate-800 text-[13px] font-semibold border border-white/50 whitespace-nowrap shadow-sm">
                {cat._count.listings}+ Spaces
              </div>
           </div>
         </div>
         
-        <div className="w-full sm:w-auto px-6 py-3 bg-gradient-to-r from-blue-900/80 to-blue-700/80 hover:from-blue-800/90 hover:to-blue-600/90 backdrop-blur-md border border-white/20 text-white text-center font-bold text-sm rounded-full transition-all active:scale-95 shadow-lg whitespace-nowrap shrink-0">
+        <div className="w-full sm:w-auto px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white text-center font-bold text-sm rounded-full transition-all active:scale-95 shadow-md whitespace-nowrap shrink-0">
           Browse now
         </div>
       </div>

@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth.config";
 import { PrismaClient, CampaignStatus, AudienceType } from "@prisma/client";
 
-const prisma = new PrismaClient();
+
 
 export async function GET(req: Request) {
   try {
