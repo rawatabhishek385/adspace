@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import DashboardSidebar from "@/components/dashboard/DashboardSidebar";
 import Breadcrumbs from "@/components/layout/Breadcrumbs";
 import { requireAuth } from "@/lib/session";
