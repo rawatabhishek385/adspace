@@ -4,7 +4,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { useState, useEffect, useRef } from "react";
-import { getSocket, connectSocket, disconnectSocket } from "@/lib/socket";
+import { useSocket } from "@/hooks/useSocket";
+import { SocketEvents } from "@/lib/socket";
 import { playNotificationSound } from "@/lib/audio";
 import NotificationBell from "../notifications/NotificationBell";
 
@@ -24,6 +25,7 @@ const NavLink = ({ href, children, isActive, onClick }: { href: string; children
 export default function Navbar() {
   const pathname = usePathname();
   const { data: session, status } = useSession();
+  const { socket, isConnected } = useSocket();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -74,12 +76,15 @@ export default function Navbar() {
 
     window.addEventListener('profileUpdated', fetchAvatar);
 
-    let socket: any = null;
-    if (status === "authenticated" && session?.user?.id) {
-      socket = connectSocket(session.user.id);
-    } else if (status === "unauthenticated") {
-      disconnectSocket();
-    }
+    return () => {
+      window.removeEventListener('profileUpdated', fetchAvatar);
+    };
+  }, [session]);
+
+  // Listen for real-time message notifications via the socket
+  useEffect(() => {
+    if (!socket || !isConnected) return;
+
     const handleNewGlobalMessage = (data: any) => {
       setUnreadCount(prev => prev + 1);
       playNotificationSound();
@@ -92,17 +97,12 @@ export default function Navbar() {
       }
     };
 
-    if (socket) {
-      socket.on("newGlobalMessage", handleNewGlobalMessage);
-    }
+    socket.on(SocketEvents.RECEIVE_MESSAGE, handleNewGlobalMessage);
 
     return () => {
-      window.removeEventListener('profileUpdated', fetchAvatar);
-      if (socket) {
-        socket.off("newGlobalMessage", handleNewGlobalMessage);
-      }
+      socket.off(SocketEvents.RECEIVE_MESSAGE, handleNewGlobalMessage);
     };
-  }, [session]);
+  }, [socket, isConnected]);
 
   const isActive = (path: string) => pathname === path;
 
