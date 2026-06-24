@@ -1,6 +1,6 @@
 import nodemailer from "nodemailer";
 
-const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://127.0.0.1:3000";
+const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://adspace-phi.vercel.app";
 
 export const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,

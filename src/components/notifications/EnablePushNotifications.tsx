@@ -12,9 +12,17 @@ export default function EnablePushNotifications() {
   useEffect(() => {
     if (typeof window !== "undefined" && "serviceWorker" in navigator && "PushManager" in window) {
       setIsSupported(true);
-      checkSubscription();
+      registerServiceWorker().then(() => checkSubscription());
     }
   }, []);
+
+  const registerServiceWorker = async () => {
+    try {
+      await navigator.serviceWorker.register('/service-worker.js');
+    } catch (e) {
+      console.error("Service Worker registration failed:", e);
+    }
+  };
 
   const checkSubscription = async () => {
     try {
@@ -22,7 +30,7 @@ export default function EnablePushNotifications() {
       const subscription = await registration.pushManager.getSubscription();
       setIsSubscribed(!!subscription);
     } catch (e) {
-      console.error(e);
+      console.error("Error checking subscription:", e);
     }
   };
 
@@ -49,33 +57,48 @@ export default function EnablePushNotifications() {
 
     setLoading(true);
     try {
+      // 1. Explicitly request permission first
+      const permission = await Notification.requestPermission();
+      if (permission !== 'granted') {
+        throw new Error('permission_denied');
+      }
+
+      // 2. Ensure service worker is registered and ready
       const registration = await navigator.serviceWorker.ready;
+      if (!registration) {
+         throw new Error("Service Worker is not ready.");
+      }
       
       const publicVapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
       if (!publicVapidKey) {
         throw new Error("VAPID public key not set");
       }
 
+      // 3. Subscribe to push manager
       const subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: urlBase64ToUint8Array(publicVapidKey),
       });
 
-      // Send the subscription to your server
-      await fetch("/api/notifications/subscribe", {
+      // 4. Send the subscription to the backend
+      const res = await fetch("/api/notifications/subscribe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(subscription),
       });
 
+      if (!res.ok) {
+         throw new Error("Failed to save subscription on server");
+      }
+
       setIsSubscribed(true);
       alert("Successfully subscribed to notifications!");
     } catch (err: any) {
       console.error("Failed to subscribe:", err);
-      if (err.message.includes('permission')) {
-         alert("You must grant notification permissions in your browser settings.");
+      if (err.message.includes('permission') || err.name === 'NotAllowedError') {
+         alert("Permission denied! Please allow notifications in your browser settings (click the lock icon next to the URL) and try again.");
       } else {
-         alert("Failed to subscribe: " + err.message);
+         alert("Failed to subscribe: " + (err.message || err.toString()));
       }
     } finally {
       setLoading(false);

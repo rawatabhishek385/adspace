@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -30,14 +30,14 @@ export function MyListingsClient({ initialListings }: MyListingsClientProps) {
 
   if (listings.length === 0) {
     return (
-      <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-16 text-center">
-        <div className="w-16 h-16 bg-slate-700/50 rounded-full flex items-center justify-center mx-auto mb-4">
-          <svg className="w-8 h-8 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <div className="bg-white border border-slate-200 rounded-2xl p-16 text-center shadow-sm">
+        <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <svg className="w-8 h-8 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
           </svg>
         </div>
-        <h3 className="text-lg font-semibold text-white mb-2">No Listings Yet</h3>
-        <p className="text-slate-400 text-sm mb-6 max-w-sm mx-auto">Create your first advertising space listing to start connecting with advertisers.</p>
+        <h3 className="text-xl font-semibold text-slate-800 mb-2">No Listings Yet</h3>
+        <p className="text-slate-500 text-sm mb-6 max-w-sm mx-auto">Create your first advertising space listing to start connecting with advertisers.</p>
         <Link href="/dashboard/listings/create" className="inline-block px-6 py-2.5 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-lg transition-colors">
           Create Your First Listing
         </Link>

@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth.config";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import { processAutoReply } from "@/lib/autoReply";
+import { maskContactInfo } from "@/lib/masking";
 
 const startSchema = z.object({
   listingId: z.string().min(1, "Listing ID is required"),
@@ -74,7 +75,7 @@ export async function POST(request: Request) {
       data: {
         conversationId: conversation.id,
         senderId: buyerId,
-        content: message.trim(),
+        content: maskContactInfo(message.trim()),
       },
     });
 

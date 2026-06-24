@@ -2,26 +2,57 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth.config";
 import { prisma } from "@/lib/prisma";
+import { z } from "zod";
 
-export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
+const deliverableSchema = z.object({
+  title: z.string(),
+  type: z.string().default("LINK"),
+  url: z.string().url(),
+});
+
+export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const resolvedParams = await params;
-    const { id: campaignId } = resolvedParams;
-
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    const { title, fileUrl, fileType } = await req.json();
 
-    if (!title || !fileUrl) {
-      return NextResponse.json({ error: "Title and File URL are required" }, { status: 400 });
+    const resolvedParams = await params;
+    const campaignId = resolvedParams.id;
+
+    const deliverables = await prisma.campaignDeliverable.findMany({
+      where: { campaignRequestId: campaignId },
+      orderBy: { createdAt: "desc" }
+    });
+
+    return NextResponse.json({ deliverables }, { status: 200 });
+  } catch (error) {
+    console.error("Error fetching deliverables:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}
+
+export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Verify campaign exists and user is part of it
+    const body = await request.json();
+    const result = deliverableSchema.safeParse(body);
+
+    if (!result.success) {
+      return NextResponse.json({ error: result.error.issues[0].message }, { status: 400 });
+    }
+
+    const { title, type, url } = result.data;
+    const resolvedParams = await params;
+    const campaignId = resolvedParams.id;
+
     const campaign = await prisma.campaignRequest.findUnique({
       where: { id: campaignId },
-      include: { influencerProfile: true },
+      include: { influencerProfile: true }
     });
 
     if (!campaign) {
@@ -29,37 +60,41 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     }
 
     if (campaign.influencerProfile.userId !== session.user.id) {
-      return NextResponse.json({ error: "Only the assigned creator can upload deliverables" }, { status: 403 });
+      return NextResponse.json({ error: "Only the influencer can submit deliverables" }, { status: 403 });
     }
 
-    if (campaign.status !== "IN_PROGRESS" && campaign.status !== "SUBMITTED") {
-      return NextResponse.json({ error: "Campaign must be in progress to upload deliverables" }, { status: 400 });
+    if (campaign.progress < 100) {
+      return NextResponse.json({ error: "You must complete all daily reports before submitting deliverables." }, { status: 400 });
     }
 
-    const deliverable = await prisma.campaignDeliverable.create({
-      data: {
-        title,
-        fileUrl,
-        fileType,
-        campaignRequestId: campaignId,
-        uploadedById: session.user.id,
-      },
+    const deliverable = await prisma.$transaction(async (tx) => {
+      const created = await tx.campaignDeliverable.create({
+        data: {
+          campaignRequestId: campaignId,
+          uploadedById: session.user.id,
+          title,
+          type,
+          url,
+          status: "SUBMITTED"
+        }
+      });
+
+      await tx.campaignActivity.create({
+        data: {
+          campaignId,
+          actorId: session.user.id,
+          actorType: "INFLUENCER",
+          action: "Deliverable Uploaded",
+          description: `Uploaded deliverable: ${title}`
+        }
+      });
+
+      return created;
     });
 
-    // Notify the Brand
-    await prisma.notification.create({
-      data: {
-        userId: campaign.requesterId,
-        type: "MESSAGE",
-        title: "New Deliverable Uploaded",
-        message: `A new deliverable "${title}" has been uploaded for your campaign.`,
-        actionUrl: `/dashboard/my-campaigns/${campaignId}`,
-      },
-    });
-
-    return NextResponse.json({ success: true, deliverable });
-  } catch (error: any) {
-    console.error("Error uploading deliverable:", error);
+    return NextResponse.json({ deliverable }, { status: 201 });
+  } catch (error) {
+    console.error("Error saving deliverable:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

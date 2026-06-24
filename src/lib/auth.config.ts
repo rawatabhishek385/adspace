@@ -71,6 +71,30 @@ export const authOptions: NextAuthOptions = {
   ],
 
   callbacks: {
+    // Redirect callback: ensures signOut/signIn never redirects to localhost
+    // in production. NextAuth resolves callbackUrl against NEXTAUTH_URL by
+    // default — this override makes it origin-aware instead.
+    async redirect({ url, baseUrl }) {
+      // Relative URLs are always safe — just prepend the base
+      if (url.startsWith("/")) {
+        return `${baseUrl}${url}`;
+      }
+
+      // Absolute URL on the same origin → allow
+      try {
+        const urlOrigin = new URL(url).origin;
+        const base = new URL(baseUrl).origin;
+        if (urlOrigin === base) {
+          return url;
+        }
+      } catch {
+        // Invalid URL — fall through to default
+      }
+
+      // Anything else (cross-origin, localhost, etc.) → go home
+      return baseUrl;
+    },
+
     // JWT callback: runs when JWT is created or updated.
     // On initial sign-in, `user` is available. On subsequent requests, only `token`.
     async jwt({ token, user, trigger, session }) {
@@ -128,7 +152,8 @@ export const authOptions: NextAuthOptions = {
 
   session: {
     strategy: "jwt",
-    maxAge: 30 * 24 * 60 * 60, // 30 days
+    maxAge: 30 * 60, // 30 minutes of inactivity logs out
+    updateAge: 5 * 60, // Regenerate token if active for 5 minutes
   },
 
   secret: process.env.NEXTAUTH_SECRET,

@@ -18,6 +18,16 @@ body {
   font-family: var(--font-poppins), 'Poppins', sans-serif;
 }
 
+/* Disable visible text cursors (caret browsing) everywhere by default */
+* {
+  caret-color: transparent;
+}
+
+/* Re-enable text cursor only on editable elements */
+input, textarea, [contenteditable="true"] {
+  caret-color: auto;
+}
+
 /* Smooth scrollbar for light theme */
 ::-webkit-scrollbar {
   width: 8px;
@@ -72,7 +82,9 @@ input[type="password"]::-ms-clear {
   display: none;
 }
 
-input[type="password"]::-webkit-credentials-auto-fill-button,
-input[type="password"]::-webkit-textfield-decoration-container {
+/* Hide Safari's auto-fill icon without breaking the entire input container */
+input[type="password"]::-webkit-credentials-auto-fill-button {
   display: none !important;
+  visibility: hidden;
+  pointer-events: none;
 }

@@ -38,6 +38,8 @@ type Message = {
   createdAt: string;
   isRead: boolean;
   isDelivered?: boolean;
+  isMasked?: boolean;
+  maskedReason?: string | null;
   senderId: string;
 };
 
@@ -65,7 +67,6 @@ type Conversation = {
   owner: { id: string; name: string; avatar?: string | null };
   hasReviewed?: boolean;
   hasReport?: boolean;
-  pinnedMessage?: Message | null;
 };
 
 export default function ChatPage({ params }: { params: Promise<{ conversationId: string }> }) {
@@ -246,8 +247,8 @@ export default function ChatPage({ params }: { params: Promise<{ conversationId:
       }));
     };
 
-    const handleMessageEdited = ({ messageId, content, isEdited, editedAt }: { messageId: string, content: string, isEdited: boolean, editedAt: string }) => {
-      setMessages((prev) => prev.map(m => m.id === messageId ? { ...m, content, isEdited, editedAt } : m));
+    const handleMessageEdited = ({ messageId, content, isEdited, editedAt, isMasked }: { messageId: string, content: string, isEdited: boolean, editedAt: string, isMasked?: boolean }) => {
+      setMessages((prev) => prev.map(m => m.id === messageId ? { ...m, content: isMasked ? "x" : content, isEdited, editedAt, isMasked } : m));
     };
 
     const handleMessageStarred = ({ messageId, isStarred }: { messageId: string, isStarred: boolean }) => {
@@ -410,6 +411,22 @@ export default function ChatPage({ params }: { params: Promise<{ conversationId:
         if (res.ok) {
           const savedMsg = await res.json();
           setMessages((prev) => prev.map((m) => (m.id === tempId ? savedMsg : m)));
+          
+          if (savedMsg.maskedPreviousIds?.length > 0) {
+            setMessages((prev) => prev.map((m) => savedMsg.maskedPreviousIds.includes(m.id) ? { ...m, isMasked: true, maskedReason: "CONTACT_SHARING" } : m));
+            const socket = getSocket();
+            if (socket && socket.connected) {
+              savedMsg.maskedPreviousIds.forEach((id: string) => {
+                socket.emit("messageEdited", { messageId: id, content: "x", isEdited: false, isMasked: true });
+              });
+              if (savedMsg.isMasked) {
+                socket.emit("messageEdited", { messageId: tempId, content: "x", isEdited: false, isMasked: true });
+              }
+            }
+          }
+          if (savedMsg.warningMessage) {
+            setMessages((prev) => [...prev, savedMsg.warningMessage]);
+          }
         } else {
           setMessages((prev) => prev.filter((m) => m.id !== tempId));
           setError("Failed to send message via API");
@@ -799,11 +816,11 @@ export default function ChatPage({ params }: { params: Promise<{ conversationId:
                       {(msg.content || msg.messageType === "TEXT") && (
                         <div className="px-3 py-1.5 pb-6 relative">
                           <p className={`text-[15px] whitespace-pre-wrap break-words leading-relaxed ${isMine ? "font-medium" : "font-normal"}`}>
-                            {isHighlighted && searchQuery ? (
+                            {msg.isMasked ? "x" : (isHighlighted && searchQuery ? (
                               msg.content.split(new RegExp(`(${searchQuery})`, 'gi')).map((part, i) => 
                                 part.toLowerCase() === searchQuery.toLowerCase() ? <mark key={i} className="bg-amber-200 text-slate-800 rounded px-0.5">{part}</mark> : part
                               )
-                            ) : msg.content}
+                            ) : msg.content)}
                           </p>
                         </div>
                       )}

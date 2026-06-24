@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getSocket } from "@/lib/socket";
+import { useSocket } from "@/hooks/useSocket";
+import { SocketEvents } from "@/lib/socket";
 
 interface InfluencerCardPresenceProps {
   userId: string;
@@ -19,49 +20,32 @@ export default function InfluencerCardPresence({
   const [isOnline, setIsOnline] = useState(initialIsOnline);
   const [availability, setAvailability] = useState(initialAvailabilityStatus);
   const [responseTime, setResponseTime] = useState(initialResponseTime);
+  const { socket, isConnected } = useSocket();
 
   useEffect(() => {
-    let s = getSocket();
-    let tempSocket = false;
+    if (!socket || !isConnected) return;
 
-    if (!s) {
-      const { io } = require("socket.io-client");
-      const tempId = `anon-${Math.random().toString(36).substring(2, 10)}`;
-      s = io(process.env.NEXT_PUBLIC_SOCKET_URL || "http://127.0.0.1:3001", { 
-        path: "/socket.io/",
-        auth: { userId: tempId }
-      });
-      tempSocket = true;
-    }
+    const handlePresenceUpdate = (data: { userId: string; isOnline: boolean }) => {
+      if (data.userId === userId) {
+        setIsOnline(data.isOnline);
+      }
+    };
 
-    if (s) {
-      const handlePresenceUpdate = (data: { userId: string; isOnline: boolean }) => {
-        if (data.userId === userId) {
-          setIsOnline(data.isOnline);
-        }
-      };
+    const handleAvailabilityUpdate = (data: { userId: string; status: string; responseTime: string | null }) => {
+      if (data.userId === userId) {
+        setAvailability(data.status);
+        setResponseTime(data.responseTime);
+      }
+    };
 
-      const handleAvailabilityUpdate = (data: { userId: string; status: string; responseTime: string | null }) => {
-        if (data.userId === userId) {
-          setAvailability(data.status);
-          setResponseTime(data.responseTime);
-        }
-      };
-
-      s.on("presenceUpdate", handlePresenceUpdate);
-      s.on("availabilityUpdate", handleAvailabilityUpdate);
-      
-      return () => {
-        if (s) {
-          s.off("presenceUpdate", handlePresenceUpdate);
-          s.off("availabilityUpdate", handleAvailabilityUpdate);
-          if (tempSocket) {
-            s.disconnect();
-          }
-        }
-      };
-    }
-  }, [userId]);
+    socket.on(SocketEvents.PRESENCE_UPDATE, handlePresenceUpdate);
+    socket.on(SocketEvents.AVAILABILITY_UPDATE, handleAvailabilityUpdate);
+    
+    return () => {
+      socket.off(SocketEvents.PRESENCE_UPDATE, handlePresenceUpdate);
+      socket.off(SocketEvents.AVAILABILITY_UPDATE, handleAvailabilityUpdate);
+    };
+  }, [socket, isConnected, userId]);
 
   return (
     <div className="flex flex-col items-start gap-1 mt-3 mb-2 text-xs">
@@ -96,3 +80,4 @@ export default function InfluencerCardPresence({
     </div>
   );
 }
+

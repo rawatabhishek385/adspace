@@ -17,7 +17,10 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
         requester: { select: { id: true, name: true, avatar: true } },
         influencerProfile: { select: { category: true, city: true, user: { select: { id: true, name: true, avatar: true } } } },
         conversations: { select: { id: true } },
-        deliverables: { select: { id: true, title: true, fileUrl: true, fileType: true, createdAt: true } },
+        deliverables: true,
+        dailyReports: { orderBy: { dayNumber: 'asc' } },
+        statusHistory: { orderBy: { createdAt: 'desc' } },
+        activities: { orderBy: { createdAt: 'desc' } },
       },
     });
 

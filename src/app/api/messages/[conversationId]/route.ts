@@ -4,6 +4,8 @@ import { authOptions } from "@/lib/auth.config";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import { processAutoReply } from "@/lib/autoReply";
+import { maskContactInfo } from "@/lib/masking";
+import { detectMultiMessagePhone, maskConversationDigits, createContactWarning } from "@/lib/contactProtection";
 
 interface RouteParams {
   params: Promise<{ conversationId: string }>;
@@ -97,6 +99,8 @@ export async function GET(request: Request, { params }: RouteParams) {
         fileSize: true,
         isEdited: true,
         editedAt: true,
+        isMasked: true,
+        maskedReason: true,
         isDeleted: true,
         isStarred: true,
         replyToId: true,
@@ -159,11 +163,30 @@ export async function POST(request: Request, { params }: RouteParams) {
       return NextResponse.json({ error: "Text messages cannot be empty" }, { status: 400 });
     }
 
+    let finalContent = content ? maskContactInfo(content.trim()) : "";
+    let finalIsMasked = false;
+    let finalMaskedReason = null;
+    let warningMessage = null;
+    let maskedPreviousIds: string[] = [];
+
+    if (messageType === "TEXT" && finalContent) {
+      const detection = await detectMultiMessagePhone(resolvedParams.conversationId, session.user.id, finalContent);
+      if (detection.isContactSharing) {
+        finalIsMasked = true;
+        finalMaskedReason = "CONTACT_SHARING";
+        await maskConversationDigits(detection.fragmentMessageIds);
+        maskedPreviousIds = detection.fragmentMessageIds;
+        warningMessage = await createContactWarning(resolvedParams.conversationId, session.user.id);
+      }
+    }
+
     const newMessage = await prisma.message.create({
       data: {
         conversationId: resolvedParams.conversationId,
         senderId: session.user.id,
-        content: content ? content.trim() : "",
+        content: finalContent,
+        isMasked: finalIsMasked,
+        maskedReason: finalMaskedReason,
         messageType,
         imageUrl,
         fileUrl,
@@ -172,7 +195,7 @@ export async function POST(request: Request, { params }: RouteParams) {
         replyToId,
       },
       include: {
-        replyTo: { select: { id: true, content: true, senderId: true, messageType: true, fileName: true, isDeleted: true } },
+        replyTo: { select: { id: true, content: true, senderId: true, messageType: true, fileName: true, isDeleted: true, isMasked: true } },
         reactions: { select: { id: true, emoji: true, userId: true } }
       }
     });
@@ -202,7 +225,11 @@ export async function POST(request: Request, { params }: RouteParams) {
       : validation.conversation!.buyerId;
     await processAutoReply(resolvedParams.conversationId, session.user.id, receiverId);
 
-    return NextResponse.json(newMessage, { status: 201 });
+    return NextResponse.json({
+      ...newMessage,
+      maskedPreviousIds,
+      warningMessage
+    }, { status: 201 });
   } catch (error) {
     console.error("Error sending message:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

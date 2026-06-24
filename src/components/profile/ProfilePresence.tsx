@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { formatDistanceToNow } from "date-fns";
-import { getSocket } from "@/lib/socket";
+import { useSocket } from "@/hooks/useSocket";
+import { SocketEvents } from "@/lib/socket";
 
 interface ProfilePresenceProps {
   userId: string;
@@ -13,48 +14,27 @@ interface ProfilePresenceProps {
 export default function ProfilePresence({ userId, initialIsOnline, initialLastSeen }: ProfilePresenceProps) {
   const [isOnline, setIsOnline] = useState(initialIsOnline);
   const [lastSeen, setLastSeen] = useState<string | null>(initialLastSeen);
+  const { socket, isConnected } = useSocket();
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (!socket || !isConnected) return;
 
-    // Use existing socket or create a temporary one for checking presence
-    let s = getSocket();
-    let tempSocket = false;
+    const handlePresenceUpdate = (data: { userId: string; isOnline: boolean; lastSeen?: string }) => {
+      if (data.userId === userId) {
+        setIsOnline(data.isOnline);
+        if (data.lastSeen) setLastSeen(data.lastSeen);
+      }
+    };
 
-    if (!s) {
-      const { io } = require("socket.io-client");
-      // Use an anonymous session id or fake user id to satisfy the backend requirement
-      const tempId = `anon-${Math.random().toString(36).substring(2, 10)}`;
-      s = io(process.env.NEXT_PUBLIC_SOCKET_URL || "http://127.0.0.1:3001", { 
-        path: "/socket.io/",
-        auth: { userId: tempId }
-      });
-      tempSocket = true;
-    }
+    socket.on(SocketEvents.PRESENCE_UPDATE, handlePresenceUpdate);
 
-    if (s) {
-      const handlePresenceUpdate = (data: { userId: string; isOnline: boolean; lastSeen?: string }) => {
-        if (data.userId === userId) {
-          setIsOnline(data.isOnline);
-          if (data.lastSeen) setLastSeen(data.lastSeen);
-        }
-      };
+    // Request initial status via socket
+    socket.emit(SocketEvents.CHECK_PRESENCE, userId);
 
-      s.on("presenceUpdate", handlePresenceUpdate);
-      
-      // Request initial status via socket
-      s.emit("checkPresence", userId);
-
-      return () => {
-        if (s) {
-          s.off("presenceUpdate", handlePresenceUpdate);
-          if (tempSocket) {
-            s.disconnect();
-          }
-        }
-      };
-    }
-  }, [userId]);
+    return () => {
+      socket.off(SocketEvents.PRESENCE_UPDATE, handlePresenceUpdate);
+    };
+  }, [socket, isConnected, userId]);
 
   return (
     <div className="flex items-center justify-center mt-1 mb-4">
@@ -72,3 +52,4 @@ export default function ProfilePresence({ userId, initialIsOnline, initialLastSe
     </div>
   );
 }
+

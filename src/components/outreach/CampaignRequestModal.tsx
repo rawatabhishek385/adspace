@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-
+import { useRouter } from "next/navigation";
 
 type CampaignRequestModalProps = {
   isOpen: boolean;
@@ -12,10 +12,12 @@ type CampaignRequestModalProps = {
 };
 
 export default function CampaignRequestModal({ isOpen, onClose, influencerId, influencerType, influencerName }: CampaignRequestModalProps) {
+  const router = useRouter();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [budget, setBudget] = useState("");
   const [timeline, setTimeline] = useState("");
+  const [timelineDays, setTimelineDays] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [toastMessage, setToastMessage] = useState<{msg: string, type: "error"|"success"} | null>(null);
 
@@ -43,7 +45,8 @@ export default function CampaignRequestModal({ isOpen, onClose, influencerId, in
           title,
           description,
           budget: budget ? parseFloat(budget.replace(/[^0-9.]/g, "")) : null,
-          timeline: timeline || null,
+          timeline: timeline === "Custom" ? `${timelineDays} Days` : (timeline || null),
+          timelineDays: parseInt(timelineDays.toString()) || 1,
           campaignType: influencerType === "INDIVIDUAL" ? "INFLUENCER" : "DIGITAL_MARKETING"
         })
       });
@@ -59,6 +62,10 @@ export default function CampaignRequestModal({ isOpen, onClose, influencerId, in
       setDescription("");
       setBudget("");
       setTimeline("");
+      setTimelineDays(1);
+      
+      // Redirect to My Campaigns tab
+      router.push("/dashboard/my-campaigns");
     } catch (err: any) {
       showToast(err.message || "Something went wrong.", "error");
     } finally {
@@ -132,7 +139,15 @@ export default function CampaignRequestModal({ isOpen, onClose, influencerId, in
               <label className="block text-sm font-medium text-slate-700 mb-1">Expected Timeline</label>
               <select
                 value={timeline}
-                onChange={(e) => setTimeline(e.target.value)}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setTimeline(val);
+                  if (val === "7 Days") setTimelineDays(7);
+                  else if (val === "15 Days") setTimelineDays(15);
+                  else if (val === "1 Month") setTimelineDays(30);
+                  else if (val === "Flexible") setTimelineDays(1);
+                  else if (val === "Custom") setTimelineDays(1);
+                }}
                 className="w-full border border-slate-300 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500"
               >
                 <option value="">Select</option>
@@ -140,8 +155,23 @@ export default function CampaignRequestModal({ isOpen, onClose, influencerId, in
                 <option value="15 Days">15 Days</option>
                 <option value="1 Month">1 Month</option>
                 <option value="Flexible">Flexible</option>
+                <option value="Custom">Custom (Enter Days)</option>
               </select>
             </div>
+            {timeline === "Custom" && (
+              <div className="col-span-2">
+                <label className="block text-sm font-medium text-slate-700 mb-1">Number of Days</label>
+                <input
+                  type="number"
+                  min="1"
+                  max="365"
+                  value={timelineDays}
+                  onChange={(e) => setTimelineDays(parseInt(e.target.value) || 1)}
+                  placeholder="e.g. 10"
+                  className="w-full border border-slate-300 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+            )}
           </div>
 
           <div className="pt-4 flex justify-end gap-3 border-t border-slate-100">

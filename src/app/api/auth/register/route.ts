@@ -155,7 +155,7 @@ export async function POST(
     
     let emailSent = true;
     try {
-      const baseUrl = request.headers.get("origin") || request.nextUrl.origin || process.env.NEXT_PUBLIC_APP_URL || "http://127.0.0.1:3000";
+      const baseUrl = request.headers.get("origin") || request.nextUrl.origin || process.env.NEXT_PUBLIC_APP_URL || "https://adspace-phi.vercel.app";
       await sendVerificationEmail(user.email, verificationToken, baseUrl);
     } catch (err) {
       console.error("Failed to send verification email:", err);

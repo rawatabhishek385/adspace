@@ -92,7 +92,7 @@ export default function Navbar() {
       if (document.hidden && Notification.permission === "granted") {
         new Notification("New Message", {
           body: data?.message?.content || "You have received a new message.",
-          icon: "/favicon.ico"
+          icon: "/icon.png"
         });
       }
     };

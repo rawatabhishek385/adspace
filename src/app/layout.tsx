@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Poppins } from "next/font/google";
 import AuthProvider from "@/components/providers/AuthProvider";
 import SessionGuard from "@/components/providers/SessionGuard";
@@ -22,6 +22,13 @@ export const metadata: Metadata = {
   description: "Rent and list advertising spaces — billboards, LED displays, digital signage, and more.",
 };
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -30,10 +37,10 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${poppins.variable} h-full antialiased overflow-x-hidden`}
+      className={`${poppins.variable} min-h-[100dvh] antialiased overflow-x-hidden`}
       suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col bg-slate-50 text-slate-800 overflow-x-hidden w-full" suppressHydrationWarning>
+      <body className="min-h-[100dvh] flex flex-col bg-slate-50 text-slate-800 overflow-x-hidden w-full" suppressHydrationWarning>
         <AuthProvider>
           <SessionGuard>
             <SocketProvider>

@@ -10,6 +10,7 @@ const requestSchema = z.object({
   description: z.string().min(10),
   budget: z.number().nullable(),
   timeline: z.string().nullable(),
+  timelineDays: z.number().min(1).default(1),
   campaignType: z.enum(["INFLUENCER", "DIGITAL_MARKETING"]),
 });
 
@@ -27,7 +28,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: result.error.issues[0].message }, { status: 400 });
     }
 
-    const { influencerId, title, description, budget, timeline, campaignType } = result.data;
+    const { influencerId, title, description, budget, timeline, timelineDays, campaignType } = result.data;
 
     // Fetch the influencer profile
     const influencer = await prisma.influencerProfile.findUnique({
@@ -68,6 +69,7 @@ export async function POST(request: Request) {
         description,
         budget,
         timeline,
+        timelineDays,
         campaignType,
         status: "PENDING",
       },

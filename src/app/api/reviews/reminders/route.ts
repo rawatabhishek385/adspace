@@ -30,15 +30,22 @@ export async function GET() {
         reviews: {
           where: { reviewerId: userId },
         },
+        _count: {
+          select: { messages: true }
+        }
       },
     });
 
-    // Filter out conversations where user has already left a review
+    // Filter out conversations where user has already left a review or hasn't communicated enough
     const pendingReminders = [];
     for (const conv of conversations) {
-      if (conv.reviews.length === 0 && conv.listing) {
+      if (conv._count.messages >= 2 && conv.reviews.length === 0 && conv.listing) {
         const isOwner = conv.listing.ownerId === userId;
-        const counterpartId = isOwner ? conv.buyerId : conv.ownerId;
+        
+        // Do not prompt the user to review their own listings
+        if (isOwner) continue;
+
+        const counterpartId = conv.ownerId;
         
         pendingReminders.push({
           conversationId: conv.id,

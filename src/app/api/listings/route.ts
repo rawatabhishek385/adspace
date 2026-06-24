@@ -26,6 +26,7 @@ export async function GET(request: NextRequest) {
     const minPrice = searchParams.get("minPrice");
     const maxPrice = searchParams.get("maxPrice");
     const sort = searchParams.get("sort");
+    const favoritesOnly = searchParams.get("favoritesOnly");
 
     const where: Record<string, unknown> = { isActive: true };
 
@@ -36,6 +37,13 @@ export async function GET(request: NextRequest) {
     if (ownerId) {
       where.ownerId = ownerId;
       delete where.isActive; // owners see all their listings
+    }
+
+    if (favoritesOnly === "true") {
+      const session = await getServerSession(authOptions);
+      if (session?.user?.id) {
+        where.favorites = { some: { userId: session.user.id } };
+      }
     }
 
     // Price range filter

@@ -32,6 +32,7 @@ export default function ListingFilters({ categories, countries, defaultCountry }
   const [minPrice, setMinPrice] = useState(searchParams.get("minPrice") || "");
   const [maxPrice, setMaxPrice] = useState(searchParams.get("maxPrice") || "");
   const [sort, setSort] = useState(searchParams.get("sort") || "newest");
+  const [favoritesOnly, setFavoritesOnly] = useState(searchParams.get("favoritesOnly") === "true");
 
   const applyFilters = (e: FormEvent) => {
     e.preventDefault();
@@ -52,6 +53,9 @@ export default function ListingFilters({ categories, countries, defaultCountry }
     if (sort) params.set("sort", sort);
     else params.delete("sort");
 
+    if (favoritesOnly) params.set("favoritesOnly", "true");
+    else params.delete("favoritesOnly");
+
     params.set("page", "1");
 
     router.push(`/listings?${params.toString()}`);
@@ -63,12 +67,14 @@ export default function ListingFilters({ categories, countries, defaultCountry }
     setMinPrice("");
     setMaxPrice("");
     setSort("newest");
+    setFavoritesOnly(false);
     const params = new URLSearchParams(searchParams.toString());
     params.delete("country");
     params.delete("categoryId");
     params.delete("minPrice");
     params.delete("maxPrice");
     params.delete("sort");
+    params.delete("favoritesOnly");
     params.set("page", "1");
     router.push(`/listings?${params.toString()}`);
   };
@@ -155,6 +161,22 @@ export default function ListingFilters({ categories, countries, defaultCountry }
           <option value="rating">Highest Rated</option>
           <option value="views">Most Viewed</option>
         </select>
+      </div>
+
+      {/* Favorites Filter */}
+      <div className="flex items-center gap-3">
+        <div className="flex items-center h-5">
+          <input
+            id="favoritesOnly"
+            type="checkbox"
+            checked={favoritesOnly}
+            onChange={(e) => setFavoritesOnly(e.target.checked)}
+            className="w-4 h-4 text-blue-500 bg-slate-50 border-slate-300 rounded focus:ring-blue-500 focus:ring-2"
+          />
+        </div>
+        <label htmlFor="favoritesOnly" className="text-sm font-medium text-slate-600 cursor-pointer select-none">
+          Show my favorites only
+        </label>
       </div>
 
       <button

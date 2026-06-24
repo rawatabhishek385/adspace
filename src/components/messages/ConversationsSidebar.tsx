@@ -11,7 +11,7 @@ type Conversation = {
   subject: string | null;
   updatedAt: string;
   listing: { id: string; title: string; thumbnail: string | null };
-  otherUser: { id: string; name: string; email: string };
+  otherUser: { id: string; name: string; email: string; avatar?: string | null };
   lastMessage: { id: string; content: string; createdAt: string; isMine: boolean } | null;
   unreadCount: number;
   isOnline?: boolean;
@@ -141,8 +141,12 @@ export default function ConversationsSidebar() {
                 <div className="w-12 h-12 rounded-full bg-white shrink-0 overflow-hidden relative shadow-sm border border-slate-100">
                   {conv.listing.thumbnail ? (
                     <img src={conv.listing.thumbnail} alt="" className="w-full h-full object-cover" />
+                  ) : conv.otherUser.avatar ? (
+                    <img src={conv.otherUser.avatar} alt="" className="w-full h-full object-cover" />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center text-slate-600 text-xs">No Img</div>
+                    <div className="w-full h-full flex items-center justify-center bg-indigo-50 text-indigo-600 text-lg font-bold">
+                      {conv.otherUser.name.charAt(0).toUpperCase()}
+                    </div>
                   )}
                   {conv.unreadCount > 0 && (
                     <div className="absolute top-0 right-0 w-4 h-4 bg-indigo-500 rounded-full border-2 border-white flex items-center justify-center">

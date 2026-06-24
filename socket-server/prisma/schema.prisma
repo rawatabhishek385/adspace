@@ -331,6 +331,8 @@ model Message {
   editedAt       DateTime?
   isDeleted      Boolean     @default(false)
   deletedAt      DateTime?
+  isMasked       Boolean     @default(false)
+  maskedReason   String?
   isStarred      Boolean     @default(false)
   createdAt      DateTime    @default(now())
   isRead         Boolean     @default(false)

@@ -14,6 +14,7 @@ import SearchBar from "@/components/search/SearchBar";
 import RecentlyViewedSection from "@/components/home/RecentlyViewedSection";
 import type { ListingWithRelations } from "@/types/listing.types";
 import { Metadata } from "next";
+import ScamAwarenessPopup from "@/components/safety/ScamAwarenessPopup";
 
 export const metadata: Metadata = {
   title: "AdSpace Marketplace | Rent Premium Advertising Spaces",
@@ -192,6 +193,9 @@ export default async function HomePage() {
             {/* Optional floating elements or illustration */}
           </div>
         </div>
+
+        {/* Scam Awareness Popup Overlay */}
+        <ScamAwarenessPopup />
       </section>
 
       {/* ─── Premium Categories Section ──────────────────────────────────────── */}

@@ -5,7 +5,7 @@ export async function processAutoReply(conversationId: string, senderId: string,
     // 1. Check if receiver is online
     let isReceiverOnline = false;
     try {
-      const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || "http://127.0.0.1:3001";
+      const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || "https://adspace-vth9.onrender.com";
       const res = await fetch(`${socketUrl}/api/presence?userId=${receiverId}`);
       if (res.ok) {
         const data = await res.json();

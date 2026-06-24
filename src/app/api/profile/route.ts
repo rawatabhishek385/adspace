@@ -31,9 +31,20 @@ export async function PATCH(request: NextRequest) {
     if (body.website !== undefined) updateData.website = body.website.trim();
     if (body.avatar !== undefined) updateData.avatar = body.avatar;
 
-    const updatedUser = await prisma.user.update({
-      where: { id: session.user.id },
-      data: updateData,
+    const updatedUser = await prisma.$transaction(async (tx) => {
+      const user = await tx.user.update({
+        where: { id: session.user.id },
+        data: updateData,
+      });
+
+      if (body.avatar !== undefined) {
+        await tx.influencerProfile.updateMany({
+          where: { userId: session.user.id },
+          data: { profileImage: body.avatar }
+        });
+      }
+
+      return user;
     });
 
     return NextResponse.json({ success: true, data: updatedUser });

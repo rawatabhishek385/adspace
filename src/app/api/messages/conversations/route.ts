@@ -38,10 +38,10 @@ export async function GET() {
           }
         },
         buyer: {
-          select: { id: true, name: true, email: true },
+          select: { id: true, name: true, email: true, avatar: true },
         },
         owner: {
-          select: { id: true, name: true, email: true },
+          select: { id: true, name: true, email: true, avatar: true },
         },
         messages: {
           where: { isDeleted: false },
@@ -95,6 +95,7 @@ export async function GET() {
           id: otherUser.id,
           name: otherUser.name,
           email: otherUser.email,
+          avatar: otherUser.avatar,
         },
         lastMessage: lastMessage
           ? {

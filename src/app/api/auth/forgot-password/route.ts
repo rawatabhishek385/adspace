@@ -90,7 +90,7 @@ export async function POST(request: NextRequest) {
     });
 
     // 7. Send email with RAW token
-    const baseUrl = request.headers.get("origin") || request.nextUrl.origin || process.env.NEXT_PUBLIC_APP_URL || "http://127.0.0.1:3000";
+    const baseUrl = request.headers.get("origin") || request.nextUrl.origin || process.env.NEXT_PUBLIC_APP_URL || "https://adspace-phi.vercel.app";
     await sendPasswordResetEmail(user.email, rawToken, baseUrl);
 
     return NextResponse.json(

@@ -30,6 +30,7 @@ export default async function ListingsSearchPage({
   const minPrice = typeof params.minPrice === "string" ? params.minPrice : "";
   const maxPrice = typeof params.maxPrice === "string" ? params.maxPrice : "";
   const sort = typeof params.sort === "string" ? params.sort : "newest";
+  const favoritesOnly = typeof params.favoritesOnly === "string" ? params.favoritesOnly : "false";
   const page = parseInt(typeof params.page === "string" ? params.page : "1", 10) || 1;
   const limit = parseInt(typeof params.limit === "string" ? params.limit : "12", 10) || 12;
 
@@ -71,6 +72,9 @@ export default async function ListingsSearchPage({
   if (effectiveCountry) where.country = { contains: effectiveCountry };
   if (city) where.city = { contains: city };
   if (categoryId) where.categoryId = categoryId;
+  if (favoritesOnly === "true" && session?.user?.id) {
+    where.favorites = { some: { userId: session.user.id } };
+  }
 
   if (minPrice || maxPrice) {
     const priceFilter: Record<string, number> = {};

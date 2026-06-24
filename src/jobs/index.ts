@@ -1,3 +1,4 @@
+import "dotenv/config";
 import cron from "node-cron";
 import { runInactiveUserReminder } from "./inactiveUserReminder";
 import { runReviewReminder } from "./reviewReminder";

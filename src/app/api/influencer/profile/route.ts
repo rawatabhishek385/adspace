@@ -74,20 +74,31 @@ export async function PATCH(request: NextRequest) {
     }
 
     // Update profile
-    const updatedProfile = await prisma.influencerProfile.update({
-      where: { userId: session.user.id },
-      data: {
-        description: description?.trim() || null,
-        category: category?.trim() || null,
-        city: city?.trim() || null,
-        pricePerPost: pricePerPost ? parseFloat(pricePerPost) : null,
-        profileImage: profileImage || null,
-        instagramUrl: instagramUrl?.trim() || null,
-        youtubeUrl: youtubeUrl?.trim() || null,
-        twitterUrl: twitterUrl?.trim() || null,
-        linkedinUrl: linkedinUrl?.trim() || null,
-        facebookUrl: facebookUrl?.trim() || null,
+    const updatedProfile = await prisma.$transaction(async (tx) => {
+      const profile = await tx.influencerProfile.update({
+        where: { userId: session.user.id },
+        data: {
+          description: description?.trim() || null,
+          category: category?.trim() || null,
+          city: city?.trim() || null,
+          pricePerPost: pricePerPost ? parseFloat(pricePerPost) : null,
+          profileImage: profileImage || null,
+          instagramUrl: instagramUrl?.trim() || null,
+          youtubeUrl: youtubeUrl?.trim() || null,
+          twitterUrl: twitterUrl?.trim() || null,
+          linkedinUrl: linkedinUrl?.trim() || null,
+          facebookUrl: facebookUrl?.trim() || null,
+        }
+      });
+
+      if (profileImage) {
+        await tx.user.update({
+          where: { id: session.user.id },
+          data: { avatar: profileImage }
+        });
       }
+
+      return profile;
     });
 
     return NextResponse.json({

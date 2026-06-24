@@ -117,8 +117,8 @@ export default async function PublicProfilePage({ params }: ProfilePageProps) {
           {/* User Info Card */}
           <div className="lg:col-span-1 bg-white border border-slate-200 shadow-sm rounded-2xl p-8 text-center flex flex-col items-center">
             <div className="relative w-32 h-32 rounded-full bg-white border-4 border-slate-700 overflow-hidden mb-4 flex items-center justify-center shrink-0">
-              {user.avatar ? (
-                <Image src={user.avatar} alt={user.name} fill className="object-cover" />
+              {(user.avatar || user.influencerProfile?.profileImage) ? (
+                <Image src={(user.avatar || user.influencerProfile?.profileImage)!} alt={user.name} fill className="object-cover" />
               ) : (
                 <span className="text-4xl font-semibold text-slate-500">{user.name.charAt(0).toUpperCase()}</span>
               )}

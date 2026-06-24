@@ -8,6 +8,7 @@ import { z } from "zod";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import AIDescriptionGenerator from "@/components/listings/AIDescriptionGenerator";
+import { CldUploadWidget } from "next-cloudinary";
 
 const LocationPicker = dynamic(() => import("@/components/maps/LocationPicker"), {
   ssr: false,
@@ -58,7 +59,6 @@ export default function ListingForm({ initialData, isEditing }: ListingFormProps
   const [categories, setCategories] = useState<Category[]>([]);
   const [serverError, setServerError] = useState<string | null>(null);
   const [uploadedMedia, setUploadedMedia] = useState<MediaItem[]>(initialData?.mediaUrls || []);
-  const [isUploading, setIsUploading] = useState(false);
   const [isGeocoding, setIsGeocoding] = useState(false);
 
   const {
@@ -115,33 +115,23 @@ export default function ListingForm({ initialData, isEditing }: ListingFormProps
       });
   }, []);
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files?.length) return;
-
-    if (uploadedMedia.length + files.length > 5) {
+  const handleFileUpload = (result: any) => {
+    if (result.event !== "success") return;
+    
+    if (uploadedMedia.length >= 5) {
       setServerError("You can only upload a maximum of 5 media files.");
-      e.target.value = ""; // clear the input
       return;
     }
 
-    setServerError(null); // clear any previous errors
-
-    setIsUploading(true);
-    const formData = new FormData();
-    Array.from(files).forEach((f) => formData.append("files", f));
-
-    try {
-      const res = await fetch("/api/upload", { method: "POST", body: formData });
-      const data = await res.json();
-      if (data.success) {
-        setUploadedMedia((prev) => [...prev, ...data.data]);
+    setServerError(null);
+    setUploadedMedia((prev) => [
+      ...prev, 
+      { 
+        url: result.info.secure_url, 
+        publicId: result.info.public_id,
+        type: result.info.resource_type === "video" ? "VIDEO" : "IMAGE"
       }
-    } catch {
-      setServerError("Failed to upload files");
-    } finally {
-      setIsUploading(false);
-    }
+    ]);
   };
 
   const removeMedia = (index: number) => {
@@ -344,27 +334,22 @@ export default function ListingForm({ initialData, isEditing }: ListingFormProps
         <h3 className="text-lg font-semibold text-slate-800">Media</h3>
         <div>
           <label className={labelClass}>Upload Images / Video</label>
-          <label className="flex items-center justify-center w-full h-32 border-2 border-dashed border-slate-200 rounded-xl cursor-pointer hover:border-blue-500 transition-colors bg-slate-50">
-            <div className="text-center">
-              {isUploading ? (
-                <div className="flex items-center gap-2 text-slate-500">
-                  <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                  </svg>
-                  Uploading...
-                </div>
-              ) : (
-                <>
-                  <svg className="w-8 h-8 text-slate-500 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <CldUploadWidget uploadPreset="ad_space" onSuccess={handleFileUpload} options={{ maxFiles: 5 - uploadedMedia.length }}>
+            {({ open }) => (
+              <button 
+                type="button" 
+                onClick={() => open()} 
+                className="w-full flex items-center justify-center h-32 border-2 border-dashed border-slate-200 rounded-xl hover:border-blue-500 transition-colors bg-slate-50"
+              >
+                <div className="text-center text-slate-500">
+                  <svg className="w-8 h-8 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                   </svg>
-                  <span className="text-sm text-slate-500">Click to upload images or video</span>
-                </>
-              )}
-            </div>
-            <input type="file" multiple accept="image/*,video/*" onChange={handleFileUpload} className="hidden" />
-          </label>
+                  <span className="text-sm">Click to open Cloudinary Uploader</span>
+                </div>
+              </button>
+            )}
+          </CldUploadWidget>
         </div>
 
         {uploadedMedia.length > 0 && (

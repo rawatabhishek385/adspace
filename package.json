@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "concurrently \"next dev -H 127.0.0.1\" \"tsx src/jobs/index.ts\"",
+    "dev": "concurrently \"next dev -H 127.0.0.1\" \"tsx src/jobs/index.ts\" \"npm run dev --prefix socket-server\"",
     "postinstall": "prisma generate",
     "build": "next build",
     "start": "next start",
