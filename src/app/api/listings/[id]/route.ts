@@ -6,7 +6,7 @@ import { deleteMultipleFromCloudinary, deleteFromCloudinary } from "@/lib/cloudi
 import { generateUniqueSlug } from "@/lib/slug";
 
 const includeRelations = {
-  owner: { select: { id: true, name: true, email: true, phone: true } },
+  owner: { select: { id: true, name: true } },
   category: { select: { id: true, name: true } },
   media: { select: { id: true, url: true, publicId: true, type: true } },
 };

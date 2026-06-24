@@ -121,7 +121,7 @@ export default async function ListingsSearchPage({
       prisma.listing.findMany({
         where,
         include: {
-          owner: { select: { id: true, name: true, email: true, phone: true } },
+          owner: { select: { id: true, name: true } },
           category: { select: { id: true, name: true } },
           media: { select: { id: true, url: true, publicId: true, type: true } },
         },
@@ -157,7 +157,7 @@ export default async function ListingsSearchPage({
       prisma.listing.findMany({
         where,
         include: {
-          owner: { select: { id: true, name: true, email: true, phone: true } },
+          owner: { select: { id: true, name: true } },
           category: { select: { id: true, name: true } },
           media: { select: { id: true, url: true, publicId: true, type: true } },
         },

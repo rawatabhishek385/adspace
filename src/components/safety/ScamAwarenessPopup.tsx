@@ -20,10 +20,10 @@ export default function ScamAwarenessPopup() {
       setIsVisible(true);
     }, 500);
 
-    // Auto-hide after 10 seconds
+    // Auto-hide after 5 seconds
     const timer = setTimeout(() => {
       setIsVisible(false);
-    }, 10500); // 10s + 500ms initial delay
+    }, 5500); // 5s + 500ms initial delay
 
     return () => {
       clearTimeout(initialDelay);

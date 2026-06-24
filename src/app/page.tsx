@@ -14,7 +14,7 @@ import SearchBar from "@/components/search/SearchBar";
 import RecentlyViewedSection from "@/components/home/RecentlyViewedSection";
 import type { ListingWithRelations } from "@/types/listing.types";
 import { Metadata } from "next";
-import ScamAwarenessPopup from "@/components/safety/ScamAwarenessPopup";
+import ScamAwarenessPopupWrapper from "@/components/safety/ScamAwarenessPopupWrapper";
 
 export const metadata: Metadata = {
   title: "AdSpace Marketplace | Rent Premium Advertising Spaces",
@@ -49,7 +49,7 @@ export default async function HomePage() {
   const session = await getServerSession(authOptions);
 
   const includeListingRelations = {
-    owner: { select: { id: true, name: true, email: true, phone: true } },
+    owner: { select: { id: true, name: true } },
     category: { select: { id: true, name: true } },
     media: { select: { id: true, url: true, publicId: true, type: true } },
     _count: { select: { favorites: true } },
@@ -195,7 +195,8 @@ export default async function HomePage() {
         </div>
 
         {/* Scam Awareness Popup Overlay */}
-        <ScamAwarenessPopup />
+        {/* Cache busted! */}
+        <ScamAwarenessPopupWrapper />
       </section>
 
       {/* ─── Premium Categories Section ──────────────────────────────────────── */}
@@ -326,7 +327,7 @@ export default async function HomePage() {
                 <div className="absolute top-4 left-4 w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm text-blue-500">
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                 </div>
-                <img src="/images/ui/explore_browse_1781851760518.png" alt="Browse Listings" className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-700" />
+                <Image src="/images/ui/explore_browse_1781851760518.png" alt="Browse Listings" width={400} height={220} className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-700" />
               </div>
               <div className="p-8 flex-grow flex flex-col justify-between bg-white relative z-10">
                 <div>
@@ -346,7 +347,7 @@ export default async function HomePage() {
                 <div className="absolute top-4 left-4 w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm text-green-500">
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" /></svg>
                 </div>
-                <img src="/images/ui/explore_list_1781851772205.png" alt="List Your Space" className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-700" />
+                <Image src="/images/ui/explore_list_1781851772205.png" alt="List Your Space" width={400} height={220} className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-700" />
               </div>
               <div className="p-8 flex-grow flex flex-col justify-between bg-white relative z-10">
                 <div>
@@ -366,7 +367,7 @@ export default async function HomePage() {
                 <div className="absolute top-4 left-4 w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm text-purple-500">
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
                 </div>
-                <img src="/images/ui/explore_dashboard_1781851783076.png" alt="Your Dashboard" className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-700" />
+                <Image src="/images/ui/explore_dashboard_1781851783076.png" alt="Your Dashboard" width={400} height={220} className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-700" />
               </div>
               <div className="p-8 flex-grow flex flex-col justify-between bg-white relative z-10">
                 <div>
@@ -386,7 +387,7 @@ export default async function HomePage() {
                 <div className="absolute top-4 left-4 w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm text-orange-500">
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" /></svg>
                 </div>
-                <img src="/images/ui/explore_join_1781851793597.png" alt="Join Free" className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-700" />
+                <Image src="/images/ui/explore_join_1781851793597.png" alt="Join Free" width={400} height={220} className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-700" />
               </div>
               <div className="p-8 flex-grow flex flex-col justify-between bg-white relative z-10">
                 <div>
@@ -426,7 +427,7 @@ export default async function HomePage() {
                 01
               </div>
               <div className="h-40 w-full mb-6 flex justify-center items-center">
-                <img src="/images/ui/step_search_1781851821089.png" alt="Find Your Space" className="h-full object-contain hover:scale-105 transition-transform duration-500" />
+                <Image src="/images/ui/step_search_1781851821089.png" alt="Find Your Space" width={200} height={160} className="h-full object-contain hover:scale-105 transition-transform duration-500" />
               </div>
               <h3 className="text-xl font-bold text-slate-800 mb-3 text-center">Find Your Space</h3>
               <p className="text-[15px] text-slate-500 text-center font-medium leading-relaxed">Browse thousands of verified ad spaces that fit your location and budget.</p>
@@ -440,7 +441,7 @@ export default async function HomePage() {
                 02
               </div>
               <div className="h-40 w-full mb-6 flex justify-center items-center">
-                <img src="/images/ui/step_handshake_1781851831189.png" alt="Connect & Book" className="h-full object-contain hover:scale-105 transition-transform duration-500" />
+                <Image src="/images/ui/step_handshake_1781851831189.png" alt="Connect & Book" width={200} height={160} className="h-full object-contain hover:scale-105 transition-transform duration-500" />
               </div>
               <h3 className="text-xl font-bold text-slate-800 mb-3 text-center">Connect & Book</h3>
               <p className="text-[15px] text-slate-500 text-center font-medium leading-relaxed">Connect with space owners and book the perfect spot for your brand.</p>
@@ -454,7 +455,7 @@ export default async function HomePage() {
                 03
               </div>
               <div className="h-40 w-full mb-6 flex justify-center items-center">
-                <img src="/images/ui/step_chart_1781851843264.png" alt="Advertise & Grow" className="h-full object-contain hover:scale-105 transition-transform duration-500" />
+                <Image src="/images/ui/step_chart_1781851843264.png" alt="Advertise & Grow" width={200} height={160} className="h-full object-contain hover:scale-105 transition-transform duration-500" />
               </div>
               <h3 className="text-xl font-bold text-slate-800 mb-3 text-center">Advertise & Grow</h3>
               <p className="text-[15px] text-slate-500 text-center font-medium leading-relaxed">Launch your campaign and grow your brand with high visibility.</p>

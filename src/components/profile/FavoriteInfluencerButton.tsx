@@ -33,7 +33,7 @@ export default function FavoriteInfluencerButton({ influencerId, initialFavorite
     <button 
       onClick={toggleFavorite}
       disabled={loading}
-      className={`absolute top-4 right-4 p-2 rounded-full shadow-sm border transition-colors ${
+      className={`p-2 rounded-full shadow-sm border transition-colors ${
         favorited 
           ? "bg-red-50 border-red-200 text-red-500" 
           : "bg-white border-slate-200 text-slate-400 hover:text-red-500 hover:bg-slate-50"

@@ -24,7 +24,7 @@ export default async function DashboardPage() {
       orderBy: { createdAt: "desc" },
       take: 5,
       include: {
-        owner: { select: { id: true, name: true, email: true, phone: true } },
+        owner: { select: { id: true, name: true } },
         category: { select: { id: true, name: true } },
         media: { select: { id: true, url: true, publicId: true, type: true } },
       },

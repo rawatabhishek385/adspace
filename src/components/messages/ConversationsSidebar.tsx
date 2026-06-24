@@ -157,19 +157,21 @@ export default function ConversationsSidebar() {
 
                 {/* Details */}
                 <div className="flex-1 min-w-0 flex flex-col justify-center">
-                  <div className="flex justify-between items-baseline mb-0.5">
-                    <div className="flex items-center gap-2 pr-2 overflow-hidden">
-                      <h3 className="text-sm font-bold text-slate-800 truncate">
-                        {conv.otherUser.name}
-                      </h3>
-                      {conv.isPinned && (
-                        <svg className="w-3.5 h-3.5 text-indigo-500 shrink-0 transform -rotate-45" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-1.473-1.473A10.014 10.014 0 0019.542 10C18.268 5.943 14.478 3 10 3a9.958 9.958 0 00-4.512 1.074l-1.78-1.781zm4.261 4.26l1.514 1.515a2.003 2.003 0 012.45 2.45l1.514 1.514a4 4 0 00-5.478-5.478z" clipRule="evenodd" />
-                          <path d="M12.454 16.697L9.75 13.992a4 4 0 01-3.742-3.741L2.335 6.578A9.98 9.98 0 00.458 10c1.274 4.057 5.065 7 9.542 7 .847 0 1.669-.105 2.454-.303z" />
-                        </svg>
-                      )}
+                  <div className="flex justify-between items-start mb-0.5">
+                    <div className="flex flex-col pr-2 overflow-hidden min-w-0">
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-sm font-bold text-slate-800 truncate">
+                          {conv.otherUser.name}
+                        </h3>
+                        {conv.isPinned && (
+                          <svg className="w-3.5 h-3.5 text-indigo-500 shrink-0 transform -rotate-45" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-1.473-1.473A10.014 10.014 0 0019.542 10C18.268 5.943 14.478 3 10 3a9.958 9.958 0 00-4.512 1.074l-1.78-1.781zm4.261 4.26l1.514 1.515a2.003 2.003 0 012.45 2.45l1.514 1.514a4 4 0 00-5.478-5.478z" clipRule="evenodd" />
+                            <path d="M12.454 16.697L9.75 13.992a4 4 0 01-3.742-3.741L2.335 6.578A9.98 9.98 0 00.458 10c1.274 4.057 5.065 7 9.542 7 .847 0 1.669-.105 2.454-.303z" />
+                          </svg>
+                        )}
+                      </div>
                       {conv.isOnline ? (
-                        <span className="shrink-0 flex items-center gap-1 text-[10px] text-indigo-600 font-medium bg-indigo-50 px-1.5 py-0.5 rounded-full">
+                        <span className="shrink-0 flex items-center gap-1 text-[10px] text-indigo-600 font-medium">
                           <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 shadow-[0_0_4px_rgba(99,102,241,0.5)]"></span>
                           Online
                         </span>
@@ -179,7 +181,7 @@ export default function ConversationsSidebar() {
                         </span>
                       )}
                     </div>
-                    <span className="text-[10px] text-slate-500 shrink-0">
+                    <span className="text-[10px] text-slate-500 shrink-0 mt-0.5">
                       {formatDistanceToNow(new Date(conv.updatedAt), { addSuffix: true })}
                     </span>
                   </div>

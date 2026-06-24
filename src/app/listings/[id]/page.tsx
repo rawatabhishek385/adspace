@@ -320,9 +320,9 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
 
               {listing.owner.phone && (() => {
                 const phone = listing.owner.phone;
-                const isMasked = !session?.user;
+                const isMasked = session?.user?.id !== listing.ownerId;
                 const displayPhone = isMasked && phone.length > 2
-                  ? `${phone[0]}${"x".repeat(phone.length - 2)}${phone[phone.length - 1]}`
+                  ? `${phone.slice(0, 2)}${"*".repeat(phone.length - 4)}${phone.slice(-2)}`
                   : phone;
 
                 return (
@@ -344,10 +344,11 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
                     )}
                     {isMasked && (
                       <p className="text-[10px] text-slate-500 mt-1 text-center">
-                        <Link href={`/login?callbackUrl=/listings/${listing.slug}`} className="text-blue-500 hover:underline">
-                          Log in
-                        </Link>{" "}
-                        to see full phone number
+                        {!session?.user ? (
+                          <><Link href={`/login?callbackUrl=/listings/${listing.slug}`} className="text-blue-500 hover:underline">Log in</Link>{" "}to see full phone number</>
+                        ) : (
+                          <>Phone number is hidden for privacy</>
+                        )}
                       </p>
                     )}
                   </div>

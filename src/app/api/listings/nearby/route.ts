@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { haversineDistance, formatDistance } from "@/lib/geo";
 
 const includeRelations = {
-  owner: { select: { id: true, name: true, email: true, phone: true } },
+  owner: { select: { id: true, name: true } },
   category: { select: { id: true, name: true } },
   media: { select: { id: true, url: true, publicId: true, type: true } },
   _count: { select: { favorites: true } },

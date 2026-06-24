@@ -113,12 +113,17 @@ async function calculateRecommendationsForUser(userId: string) {
       isActive: true,
       ownerId: { not: userId },
       id: { notIn: Array.from(viewedListings) },
-      OR: [
-        { categoryId: { in: topCategories } },
-        { city: { in: topCities } },
-      ],
+      ...(topCategories.length > 0 || topCities.length > 0
+        ? {
+            OR: [
+              ...(topCategories.length > 0 ? [{ categoryId: { in: topCategories } }] : []),
+              ...(topCities.length > 0 ? [{ city: { in: topCities } }] : []),
+            ],
+          }
+        : {}),
     },
     take: 50,
+    orderBy: topCategories.length === 0 && topCities.length === 0 ? { trendingScore: "desc" } : undefined,
   });
 
   const scoredRecommendations = candidates.map((listing) => {

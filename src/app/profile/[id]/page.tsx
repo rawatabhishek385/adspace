@@ -143,16 +143,36 @@ export default async function PublicProfilePage({ params }: ProfilePageProps) {
               </div>
             )}
             
-            {user.email && (
-              <div className="flex items-center text-slate-500 text-sm mb-2">
-                <svg className="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                </svg>
-                <a href={`mailto:${user.email}`} className="hover:text-slate-600 transition-colors">
-                  {user.email}
-                </a>
-              </div>
-            )}
+            {user.email && (() => {
+              const email = user.email;
+              const shouldMask = !isOwnProfile;
+              let displayEmail = email;
+              if (shouldMask) {
+                const [localPart, domain] = email.split("@");
+                const maskedLocal = localPart.length > 2
+                  ? `${localPart.slice(0, 2)}${"*".repeat(Math.min(localPart.length - 2, 5))}`
+                  : localPart;
+                const domainParts = domain.split(".");
+                const maskedDomain = domainParts[0].length > 2
+                  ? `${domainParts[0].slice(0, 2)}${"*".repeat(3)}`
+                  : domainParts[0];
+                displayEmail = `${maskedLocal}@${maskedDomain}.${domainParts.slice(1).join(".")}`;
+              }
+              return (
+                <div className="flex items-center text-slate-500 text-sm mb-2">
+                  <svg className="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                  {shouldMask ? (
+                    <span>{displayEmail}</span>
+                  ) : (
+                    <a href={`mailto:${user.email}`} className="hover:text-slate-600 transition-colors">
+                      {user.email}
+                    </a>
+                  )}
+                </div>
+              );
+            })()}
             
             <p className="text-slate-500 text-sm mb-6">Member Since {memberSince}</p>
 
@@ -193,12 +213,6 @@ export default async function PublicProfilePage({ params }: ProfilePageProps) {
             {/* Influencer Profile Information */}
             {user.influencerProfile && user.influencerProfile.status === "APPROVED" && user.influencerProfile.isPublic && (
               <div className="bg-gradient-to-br from-indigo-50 to-blue-50 border border-blue-100 shadow-sm rounded-2xl p-8 relative overflow-hidden">
-                {session?.user && !isOwnProfile && (
-                  <FavoriteInfluencerButton 
-                    influencerId={user.influencerProfile.id} 
-                    initialFavorited={user.influencerProfile.favoritedBy?.length > 0} 
-                  />
-                )}
                 <div className="absolute top-0 right-0 p-6 opacity-10 pointer-events-none">
                   <svg className="w-24 h-24 text-blue-500" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" />
@@ -206,8 +220,8 @@ export default async function PublicProfilePage({ params }: ProfilePageProps) {
                 </div>
                 
                 <div className="relative z-10">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-3">
+                  <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+                    <div className="flex items-center gap-3 flex-wrap">
                       <span className="bg-blue-100 text-blue-700 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full">
                         {user.influencerProfile.type === "INDIVIDUAL" ? "Verified Creator" : "Digital Agency"}
                       </span>
@@ -218,7 +232,13 @@ export default async function PublicProfilePage({ params }: ProfilePageProps) {
                       )}
                     </div>
                     {session?.user && !isOwnProfile && (
-                      <InfluencerReportButton influencerId={user.influencerProfile.id} />
+                      <div className="flex items-center gap-2">
+                        <FavoriteInfluencerButton 
+                          influencerId={user.influencerProfile.id} 
+                          initialFavorited={user.influencerProfile.favoritedBy?.length > 0} 
+                        />
+                        <InfluencerReportButton influencerId={user.influencerProfile.id} />
+                      </div>
                     )}
                   </div>
                   

@@ -1,4 +1,4 @@
-﻿import { requireAuth } from "@/lib/session";
+import { requireAuth } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { MyListingsClient } from "./MyListingsClient";
@@ -9,7 +9,7 @@ export default async function MyListingsPage() {
   const listings = await prisma.listing.findMany({
     where: { ownerId: user.id },
     include: {
-      owner: { select: { id: true, name: true, email: true, phone: true } },
+      owner: { select: { id: true, name: true } },
       category: { select: { id: true, name: true } },
       media: { select: { id: true, url: true, type: true } },
     },
