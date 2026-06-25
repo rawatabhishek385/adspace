@@ -110,8 +110,6 @@ export default async function HomePage() {
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
       <StructuredData data={jsonLd} />
-      <ScamAwarenessPopupWrapper />
-
       {/* ─── Hero Section ────────────────────────────────────────────── */}
       <section className="relative pt-8 pb-8 lg:pt-4 lg:pb-4 overflow-hidden bg-white min-h-[calc(100vh-64px)] flex items-center mb-16">
 
