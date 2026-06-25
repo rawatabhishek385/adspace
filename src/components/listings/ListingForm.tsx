@@ -334,22 +334,33 @@ export default function ListingForm({ initialData, isEditing }: ListingFormProps
         <h3 className="text-lg font-semibold text-slate-800">Media</h3>
         <div>
           <label className={labelClass}>Upload Images / Video</label>
-          <CldUploadWidget uploadPreset="ad_space" onSuccess={handleFileUpload} options={{ maxFiles: 5 - uploadedMedia.length }}>
-            {({ open }) => (
-              <button 
-                type="button" 
-                onClick={() => open()} 
-                className="w-full flex items-center justify-center h-32 border-2 border-dashed border-slate-200 rounded-xl hover:border-blue-500 transition-colors bg-slate-50"
-              >
-                <div className="text-center text-slate-500">
-                  <svg className="w-8 h-8 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                  </svg>
-                  <span className="text-sm">Click to open Cloudinary Uploader</span>
-                </div>
-              </button>
-            )}
-          </CldUploadWidget>
+          {process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME ? (
+            <CldUploadWidget uploadPreset="ad_space" onSuccess={handleFileUpload} options={{ maxFiles: 5 - uploadedMedia.length }}>
+              {({ open }) => (
+                <button 
+                  type="button" 
+                  onClick={() => open()} 
+                  className="w-full flex items-center justify-center h-32 border-2 border-dashed border-slate-200 rounded-xl hover:border-blue-500 transition-colors bg-slate-50"
+                >
+                  <div className="text-center text-slate-500">
+                    <svg className="w-8 h-8 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
+                    <span className="text-sm">Click to open Cloudinary Uploader</span>
+                  </div>
+                </button>
+              )}
+            </CldUploadWidget>
+          ) : (
+            <div className="w-full flex items-center justify-center h-32 border-2 border-dashed border-red-200 rounded-xl bg-red-50 text-red-500 text-sm p-4 text-center">
+              <div className="flex flex-col items-center">
+                <svg className="w-8 h-8 mx-auto mb-2 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                Cloudinary is not configured. Please add NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME to your environment variables.
+              </div>
+            </div>
+          )}
         </div>
 
         {uploadedMedia.length > 0 && (
