@@ -7,6 +7,46 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth.config";
 import { getUserCountry } from "@/lib/getUserCountry";
 
+import { Metadata } from "next";
+
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string; category?: string; type?: string; country?: string; city?: string }>;
+}): Promise<Metadata> {
+  const resolvedParams = await searchParams;
+  const { q, type, country, city } = resolvedParams;
+
+  let title = "Browse Influencers & Agencies | AdSpace Outreach";
+  let description = "Find top-rated digital marketers, agencies, and influencers for your ad campaigns.";
+
+  if (type === "DIGITAL_MARKETER") {
+    title = "Browse Digital Agencies | AdSpace Outreach";
+  } else if (type === "CONTENT_CREATOR") {
+    title = "Browse Content Creators | AdSpace Outreach";
+  }
+
+  if (city && country) {
+    title = `${title} in ${city}, ${country}`;
+  } else if (country) {
+    title = `${title} in ${country}`;
+  }
+
+  if (q) {
+    title = `${q} | ${title}`;
+  }
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      type: "website",
+    },
+  };
+}
+
 export default async function BrowseInfluencersPage({
   searchParams,
 }: {

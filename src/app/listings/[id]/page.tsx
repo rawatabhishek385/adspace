@@ -12,6 +12,7 @@ import ReportListingButton from "@/components/reports/ReportListingButton";
 import { FavoriteButton } from "@/components/listings/FavoriteButton";
 import SimilarListingsSection from "@/components/listings/SimilarListingsSection";
 import { Metadata } from "next";
+import StructuredData from "@/components/seo/StructuredData";
 
 interface ListingDetailPageProps {
   params: Promise<{ id: string }>;
@@ -115,8 +116,30 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
   // Sort media to put images first if desired, or just pass as is
   const media = listing.media;
 
+  const primaryImage = listing.media.find(m => m.type === "IMAGE")?.url || "https://res.cloudinary.com/demo/image/upload/v1/adspace/banner.jpg";
+
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    "name": listing.title,
+    "image": primaryImage,
+    "description": listing.description,
+    "category": listing.category.name,
+    "offers": {
+      "@type": "Offer",
+      "priceCurrency": "INR",
+      "price": listing.price,
+      "availability": "https://schema.org/InStock",
+      "seller": {
+        "@type": "Person",
+        "name": listing.owner.name
+      }
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50/30">
+      <StructuredData data={jsonLd} />
       <ListingViewTracker listingId={listing.id} />
       
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">

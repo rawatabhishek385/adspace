@@ -18,8 +18,40 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
-  title: "Ad Space Marketplace",
-  description: "Rent and list advertising spaces — billboards, LED displays, digital signage, and more.",
+  metadataBase: new URL(process.env.NEXTAUTH_URL || "https://adspace-marketplace.com"),
+  title: {
+    default: "AdSpace Marketplace | Rent Premium Advertising Spaces",
+    template: "%s | AdSpace Marketplace",
+  },
+  description: "Find and rent the best outdoor billboards, digital signage, and LED displays for your advertising campaigns.",
+  keywords: ["advertising space", "rent billboard", "digital signage", "LED display", "outdoor advertising", "ad space", "influencer marketing"],
+  authors: [{ name: "AdSpace Team" }],
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: "/",
+    siteName: "AdSpace Marketplace",
+    title: "AdSpace Marketplace | Rent Premium Advertising Spaces",
+    description: "Find and rent the best outdoor billboards, digital signage, and LED displays for your advertising campaigns.",
+    images: [
+      {
+        url: "https://res.cloudinary.com/demo/image/upload/v1/adspace/banner.jpg",
+        width: 1200,
+        height: 630,
+        alt: "AdSpace Marketplace Banner",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "AdSpace Marketplace",
+    description: "Find and rent the best outdoor billboards, digital signage, and LED displays.",
+    images: ["https://res.cloudinary.com/demo/image/upload/v1/adspace/banner.jpg"],
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 export const viewport: Viewport = {

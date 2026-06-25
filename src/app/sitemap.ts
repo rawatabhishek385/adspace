@@ -10,11 +10,24 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     select: { slug: true, id: true, updatedAt: true },
   });
 
+  // Fetch public influencer profiles
+  const influencers = await prisma.influencerProfile.findMany({
+    where: { status: "APPROVED", isPublic: true },
+    select: { userId: true, updatedAt: true },
+  });
+
   const listingUrls = listings.map((listing) => ({
     url: `${baseUrl}/listings/${listing.slug || listing.id}`,
     lastModified: listing.updatedAt,
     changeFrequency: 'weekly' as const,
     priority: 0.8,
+  }));
+
+  const influencerUrls = influencers.map((influencer) => ({
+    url: `${baseUrl}/profile/${influencer.userId}`,
+    lastModified: influencer.updatedAt,
+    changeFrequency: 'weekly' as const,
+    priority: 0.7,
   }));
 
   return [
@@ -31,17 +44,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.9,
     },
     {
-      url: `${baseUrl}/login`,
+      url: `${baseUrl}/outreach/browse`,
       lastModified: new Date(),
-      changeFrequency: 'monthly',
-      priority: 0.5,
+      changeFrequency: 'daily',
+      priority: 0.9,
     },
     {
-      url: `${baseUrl}/register`,
+      url: `${baseUrl}/outreach`,
       lastModified: new Date(),
       changeFrequency: 'monthly',
-      priority: 0.5,
+      priority: 0.8,
     },
     ...listingUrls,
+    ...influencerUrls,
   ];
 }

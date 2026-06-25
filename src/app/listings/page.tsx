@@ -9,10 +9,34 @@ import ListingViewToggle from "@/components/listings/ListingViewToggle";
 import SaveSearchButton from "@/components/search/SaveSearchButton";
 import { Metadata } from "next";
 
-export const metadata: Metadata = {
-  title: "Search Advertising Spaces | AdSpace Marketplace",
-  description: "Browse and filter premium advertising spaces by location, category, and price.",
-};
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}): Promise<Metadata> {
+  const params = await searchParams;
+  const q = typeof params.q === "string" ? params.q : "";
+  const location = typeof params.location === "string" ? params.location : "";
+
+  let title = "Search Advertising Spaces | AdSpace Marketplace";
+  if (q && location) {
+    title = `${q} Advertising Spaces in ${location} | AdSpace Marketplace`;
+  } else if (q) {
+    title = `${q} Advertising Spaces | AdSpace Marketplace`;
+  } else if (location) {
+    title = `Advertising Spaces in ${location} | AdSpace Marketplace`;
+  }
+
+  return {
+    title,
+    description: "Browse and filter premium advertising spaces by location, category, and price.",
+    openGraph: {
+      title,
+      description: "Browse and filter premium advertising spaces by location, category, and price.",
+      type: "website",
+    },
+  };
+}
 
 // Next.js config for search params
 export const dynamic = "force-dynamic";

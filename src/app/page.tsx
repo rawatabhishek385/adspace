@@ -15,6 +15,7 @@ import RecentlyViewedSection from "@/components/home/RecentlyViewedSection";
 import type { ListingWithRelations } from "@/types/listing.types";
 import { Metadata } from "next";
 import ScamAwarenessPopupWrapper from "@/components/safety/ScamAwarenessPopupWrapper";
+import StructuredData from "@/components/seo/StructuredData";
 
 export const metadata: Metadata = {
   title: "AdSpace Marketplace | Rent Premium Advertising Spaces",
@@ -93,8 +94,23 @@ export default async function HomePage() {
 
   const userFavoritedIds = new Set(userFavorites.map(f => f.listingId));
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "AdSpace Marketplace",
+    "url": process.env.NEXTAUTH_URL || "https://adspace-marketplace.com",
+    "description": "Find and rent the best outdoor billboards, digital signage, and LED displays for your advertising campaigns.",
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": `${process.env.NEXTAUTH_URL || "https://adspace-marketplace.com"}/listings?q={search_term_string}`,
+      "query-input": "required name=search_term_string"
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
+      <StructuredData data={jsonLd} />
+      <ScamAwarenessPopupWrapper />
 
       {/* ─── Hero Section ────────────────────────────────────────────── */}
       <section className="relative pt-8 pb-8 lg:pt-4 lg:pb-4 overflow-hidden bg-white min-h-[calc(100vh-64px)] flex items-center mb-16">

@@ -14,6 +14,7 @@ import CampaignRequestCTA from "@/components/outreach/CampaignRequestCTA";
 import FavoriteInfluencerButton from "@/components/profile/FavoriteInfluencerButton";
 import ChatWithInfluencerButton from "@/components/profile/ChatWithInfluencerButton";
 import EditProfileButton from "@/components/profile/EditProfileButton";
+import StructuredData from "@/components/seo/StructuredData";
 
 interface ProfilePageProps {
   params: Promise<{ id: string }>;
@@ -23,14 +24,29 @@ export async function generateMetadata({ params }: ProfilePageProps): Promise<Me
   const { id } = await params;
   const user = await prisma.user.findUnique({
     where: { id },
-    select: { name: true, bio: true },
+    select: { name: true, bio: true, influencerProfile: { select: { type: true, category: true, status: true, isPublic: true } } },
   });
 
   if (!user) return { title: "Profile Not Found" };
 
+  const isInfluencer = user.influencerProfile?.status === "APPROVED" && user.influencerProfile?.isPublic;
+  const roleTitle = isInfluencer ? (user.influencerProfile?.type === "DIGITAL_MARKETER" ? "Digital Agency" : "Verified Creator") : "Advertising Space Owner";
+  const title = `${user.name} | ${roleTitle} | AdSpace`;
+  const desc = user.bio ? user.bio.substring(0, 160) : `View advertising spaces and services by ${user.name}.`;
+
   return {
-    title: `${user.name} | Advertising Space Owner`,
-    description: user.bio ? user.bio.substring(0, 160) : `View advertising spaces listed by ${user.name}.`,
+    title,
+    description: desc,
+    openGraph: {
+      title,
+      description: desc,
+      type: "profile",
+    },
+    twitter: {
+      card: "summary",
+      title,
+      description: desc,
+    }
   };
 }
 
@@ -107,8 +123,24 @@ export default async function PublicProfilePage({ params }: ProfilePageProps) {
 
   const memberSince = new Intl.DateTimeFormat("en-US", { month: "short", year: "numeric" }).format(user.createdAt);
 
+  const isInfluencer = user.influencerProfile?.status === "APPROVED" && user.influencerProfile?.isPublic;
+  
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": isInfluencer && user.influencerProfile?.type === "DIGITAL_MARKETER" ? "Organization" : "Person",
+    "name": isInfluencer && user.influencerProfile?.companyName ? user.influencerProfile.companyName : user.name,
+    "image": user.avatar || user.influencerProfile?.profileImage || "",
+    "description": user.bio || user.influencerProfile?.description || "",
+    "url": `${process.env.NEXTAUTH_URL || "https://adspace-marketplace.com"}/profile/${user.id}`,
+    "mainEntityOfPage": {
+      "@type": "ProfilePage",
+      "@id": `${process.env.NEXTAUTH_URL || "https://adspace-marketplace.com"}/profile/${user.id}`
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50/30 pt-24 pb-12">
+      <StructuredData data={jsonLd} />
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Profile Header & Stats */}
