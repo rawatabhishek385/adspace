@@ -31,7 +31,7 @@ export default function LoginPage() {
   
   useEffect(() => {
     if (status === "authenticated") {
-      router.push("/dashboard");
+      router.push("/");
     }
   }, [status, router]);
 
@@ -88,17 +88,7 @@ export default function LoginPage() {
 
       sessionStorage.setItem("tab_initialized", "true");
 
-      // Fetch session to determine redirect based on role
-      const sessionRes = await fetch("/api/auth/session");
-      const session = await sessionRes.json();
-
-      if (session?.user?.role === "ADMIN") {
-        router.push("/");
-      } else {
-        router.push("/");
-      }
-
-      router.refresh();
+      window.location.href = "/";
     } catch {
       setServerError("Something went wrong. Please try again.");
     }
