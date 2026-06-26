@@ -149,6 +149,7 @@ model User {
   updatedAt           DateTime             @updatedAt
   pinnedConversations PinnedConversation[]
   messageHides        MessageHide[]
+  blogs               Blog[]               @relation("BlogAuthor")
 }
 
 model Category {
@@ -923,4 +924,71 @@ model CampaignDailyReport {
 
   @@unique([campaignId, dayNumber])
   @@index([campaignId])
+}
+
+// ─── Blog CMS ─────────────────────────────────────────────────────────────────
+
+enum BlogStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+model Blog {
+  id             String     @id @default(cuid())
+  title          String
+  slug           String     @unique
+  excerpt        String?    @db.Text
+  content        String     @db.LongText
+  coverImage     String?
+  featuredImage  String?
+  authorId       String
+  categoryId     String?
+  status         BlogStatus @default(DRAFT)
+  isFeatured     Boolean    @default(false)
+  readTime       Int?
+  views          Int        @default(0)
+  seoTitle       String?
+  seoDescription String?    @db.Text
+  seoKeywords    String?
+  seoImage       String?
+  canonicalUrl   String?
+  publishedAt    DateTime?
+  updatedById    String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  author   User          @relation("BlogAuthor", fields: [authorId], references: [id])
+  category BlogCategory? @relation(fields: [categoryId], references: [id])
+  tags     BlogTag[]     @relation("BlogToBlogTag")
+
+  @@index([slug])
+  @@index([status])
+  @@index([publishedAt])
+  @@index([categoryId])
+  @@index([authorId])
+}
+
+model BlogCategory {
+  id          String  @id @default(cuid())
+  name        String  @unique
+  slug        String  @unique
+  description String? @db.Text
+
+  blogs Blog[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model BlogTag {
+  id   String @id @default(cuid())
+  name String @unique
+  slug String @unique
+
+  blogs Blog[] @relation("BlogToBlogTag")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

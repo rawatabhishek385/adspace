@@ -1,7 +1,7 @@
 import { requireAdmin } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
-import { CategoryManager } from "./CategoryManager";
+import { CategoriesTabs } from "./CategoriesTabs";
 
 export default async function AdminCategoriesPage() {
   await requireAdmin();
@@ -11,6 +11,15 @@ export default async function AdminCategoriesPage() {
     include: {
       _count: {
         select: { listings: true },
+      },
+    },
+  });
+
+  const blogCategories = await prisma.blogCategory.findMany({
+    orderBy: { name: "asc" },
+    include: {
+      _count: {
+        select: { blogs: true },
       },
     },
   });
@@ -25,7 +34,7 @@ export default async function AdminCategoriesPage() {
           </p>
         </div>
       </div>
-      <CategoryManager initialCategories={categories} />
+      <CategoriesTabs listingCategories={categories} blogCategories={blogCategories} />
     </div>
   );
 }
